@@ -7,7 +7,7 @@ import xarray as xr
 from .utils import *
 
 
-def create(    
+def create(
     lat: Union[float, int],
     lon: Union[float, int],
     collection: str,
@@ -16,7 +16,7 @@ def create(
     end_date: str,
     edge_size: Union[float, int] = 128.0,
     resolution: Union[float, int] = 10.0,
-    stac: str = 'https://planetarycomputer.microsoft.com/api/stac/v1',    
+    stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
 ) -> xr.Dataset:
     """Creates a data cube from a STAC Catalogue as a :code:`xr.Dataset` object.
 
