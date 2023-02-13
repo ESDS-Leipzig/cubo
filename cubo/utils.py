@@ -10,7 +10,7 @@ def _central_pixel_bbox(
     lat: Union[float, int],
     edge_size: Union[float, int],
     resolution: Union[float, int],
-) -> dict:
+) -> tuple:
     """Creates a Bounding Box (BBox) given a pair of coordinates and a buffer distance.
 
     Parameters
