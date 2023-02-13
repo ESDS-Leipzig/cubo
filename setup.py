@@ -28,6 +28,11 @@ setup(
         "dask>=2021.9.1",
         "numpy",
         "pandas",
+        "planetary_computer",
+        "pyproj",
+        "pystac_client",
+        "rasterio",
+        "stackstac",
         "xarray",
     ],
     classifiers=[
