@@ -2,9 +2,13 @@ from typing import Any, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+import planetary_computer as pc
+import pystac_client
+import rasterio.features
+import stackstac
 import xarray as xr
 
-from .utils import *
+from .utils import _central_pixel_bbox
 
 
 def create(
@@ -17,8 +21,12 @@ def create(
     edge_size: Union[float, int] = 128.0,
     resolution: Union[float, int] = 10.0,
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
-) -> xr.Dataset:
-    """Creates a data cube from a STAC Catalogue as a :code:`xr.Dataset` object.
+    **kwargs,
+) -> xr.DataArray:
+    """Creates a data cube from a STAC Catalogue as a :code:`xr.DataArray` object.
+
+    The coordinates used here work as the approximate central coordinates of the data cube
+    in the spatial dimension.
 
     Parameters
     ----------
@@ -36,14 +44,20 @@ def create(
         End date of the data cube in YYYY-MM-DD format.
     edge_size : float | int, default = 128
         Size of the edge of the cube in pixels. All edges share the same size.
+
+        .. warning::
+           If :code:`edge_size` is not a multiple of 2, it will be rounded.
+
     resolution : float | int, default = 10
         Pixel size in meters.
     stac : str, default = 'https://planetarycomputer.microsoft.com/api/stac/v1'
         Endpoint of the STAC Catalogue to use.
+    kwargs :
+        Additional keyword arguments passed to :code:`pystac_client.Client.search()`.
 
     Returns
     -------
-    xr.Dataset
+    xr.DataArray
         Data Cube.
 
 
@@ -63,7 +77,67 @@ def create(
     ... )
     <xarray.DataArray (time: 12, x: 64, y: 64)>
     """
+    # Get the BBox and EPSG
+    bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
+        lat, lon, edge_size, resolution
+    )
 
-    result = 1
+    # Convert UTM Bbox to a Feature
+    bbox_utm = rasterio.features.bounds(bbox_utm)
 
-    return result
+    # Open the Catalogue
+    CATALOG = pystac_client.Client.open(stac)
+
+    # Do a search
+    SEARCH = CATALOG.search(
+        intersects=bbox_latlon,
+        datetime=f"{start_date}/{end_date}",
+        collections=[collection],
+        **kwargs,
+    )
+
+    # Get all items and sign if using Planetary Computer
+    items = SEARCH.get_all_items()
+
+    if stac == "https://planetarycomputer.microsoft.com/api/stac/v1":
+        items = pc.sign(items)
+
+    # Put the bands into list if not a list already
+    if not isinstance(bands, list):
+        bands = [bands]
+
+    # Create the cube
+    cube = stackstac.stack(
+        items,
+        assets=bands,
+        resolution=resolution,
+        bounds=bbox_utm,
+        epsg=epsg,
+    )
+
+    # Delete attributes
+    attributes = ["spec", "crs", "transform", "resolution"]
+
+    for attribute in attributes:
+        if attribute in cube.attrs:
+            del cube.attrs[attribute]
+
+    # New attributes
+    cube.attrs = dict(
+        collection=collection,
+        stac=stac,
+        epsg=epsg,
+        resolution=resolution,
+        edge_size=edge_size,
+        central_lat=lat,
+        central_lon=lon,
+        central_y=utm_coords[1],
+        central_x=utm_coords[0],
+        time_coverage_start=start_date,
+        time_coverage_end=end_date,
+    )
+
+    # New name
+    cube.name = collection
+
+    return cube

@@ -6,8 +6,8 @@ from pyproj.database import query_utm_crs_info
 
 
 def _central_pixel_bbox(
-    lon: Union[float, int],
     lat: Union[float, int],
+    lon: Union[float, int],
     edge_size: Union[float, int],
     resolution: Union[float, int],
 ) -> tuple:
@@ -15,13 +15,13 @@ def _central_pixel_bbox(
 
     Parameters
     ----------
-    lon : float
-        Longitude.
     lat : float
         Latitude.
+    lon : float
+        Longitude.
     edge_size : float
         Buffer distance in meters.
-    resolution : int | float, default = 10
+    resolution : int | float
         Spatial resolution to use.
     latlng : bool, default = True
         Whether to return the BBox as geographic coordinates.
@@ -53,16 +53,16 @@ def _central_pixel_bbox(
     utm_coords = transformer.transform(lon, lat)
 
     # Round the coordinates
-    utm_coords = [round(coord / resolution) * resolution for coord in utm_coords]
+    utm_coords_round = [round(coord / resolution) * resolution for coord in utm_coords]
 
     # Buffer size
-    buffer = round(edge_size / 2)
+    buffer = round(edge_size * resolution / 2)
 
     # Create BBox coordinates according to the edge size
-    E = utm_coords[0] + buffer
-    W = utm_coords[0] - buffer
-    N = utm_coords[1] + buffer
-    S = utm_coords[1] - buffer
+    E = utm_coords_round[0] + buffer
+    W = utm_coords_round[0] - buffer
+    N = utm_coords_round[1] + buffer
+    S = utm_coords_round[1] - buffer
 
     # Create polygon from BBox coordinates
     polygon = [
@@ -88,4 +88,4 @@ def _central_pixel_bbox(
         "coordinates": [polygon_latlon],
     }
 
-    return (bbox_utm, bbox_latlon, f"EPSG:{epsg}")
+    return (bbox_utm, bbox_latlon, utm_coords, f"EPSG:{epsg}")
