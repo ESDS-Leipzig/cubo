@@ -19,7 +19,7 @@ setup(
     license="MIT",
     author="David Montero Loaiza",
     author_email="dml.mont@gmail.com",
-    description="A Python package for creating data cubes from STAC",
+    description="Easily create EO mini cubes from STAC in Python",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),

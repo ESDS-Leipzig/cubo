@@ -2,7 +2,7 @@
   <a href="https://github.com/davemlz/cubo"><img src="https://github.com/davemlz/cubo/raw/main/docs/_static/logo.png" alt="cubo"></a>
 </p>
 <p align="center">
-    <em>A Python package for creating data cubes from STAC</em>
+    <em>Easily create EO mini cubes from STAC in Python</em>
 </p>
 <p align="center">
 <a href='https://pypi.python.org/pypi/cubo'>
