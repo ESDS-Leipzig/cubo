@@ -14,5 +14,5 @@ with :code:`import cubo` and can be called from it (e.g., :code:`cubo.create()`)
 .. autosummary::
    :toctree: stubs
 
-   create
+   cubo.create
    
