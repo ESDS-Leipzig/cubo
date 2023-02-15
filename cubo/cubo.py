@@ -14,10 +14,10 @@ from .utils import _central_pixel_bbox
 def create(
     lat: Union[float, int],
     lon: Union[float, int],
-    collection: str,
-    bands: Union[str, List[str]],
+    collection: str,    
     start_date: str,
     end_date: str,
+    bands: Optional[Union[str, List[str]]] = None,
     edge_size: Union[float, int] = 128.0,
     resolution: Union[float, int] = 10.0,
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -36,12 +36,12 @@ def create(
         Longitude of the central pixel of the data cube.
     collection : str
         Name of the collection in the STAC Catalogue.
-    bands : str | List[str]
-        Name of the band(s) from the collection to use.
     start_date : str
         Start date of the data cube in YYYY-MM-DD format.
     end_date : str
         End date of the data cube in YYYY-MM-DD format.
+    bands : str | List[str], default = None
+        Name of the band(s) from the collection to use.
     edge_size : float | int, default = 128
         Size of the edge of the cube in pixels. All edges share the same size.
 
@@ -67,15 +67,16 @@ def create(
 
     >>> import cubo
     >>> cubo.create(
-    ...     lat = 3.71,
-    ...     lon = -76.43,
-    ...     collection = "sentinel-2-l2a"
-    ...     resolution = 10,
-    ...     start_date = "2021-01-01",
-    ...     end_date = "2021-02-01",
-    ...     edge_size = 64
+    ...     lat=50,
+    ...     lon=10,
+    ...     collection="sentinel-2-l2a",
+    ...     bands=["B02","B03","B04"],
+    ...     start_date="2021-06-01",
+    ...     end_date="2021-06-10",
+    ...     edge_size=32,
+    ...     resolution=10,
     ... )
-    <xarray.DataArray (time: 12, x: 64, y: 64)>
+    <xarray.DataArray (time: 3, band: 3, x: 32, y: 32)>
     """
     # Get the BBox and EPSG
     bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
@@ -103,7 +104,7 @@ def create(
         items = pc.sign(items)
 
     # Put the bands into list if not a list already
-    if not isinstance(bands, list):
+    if not isinstance(bands, list) and bands is not None:
         bands = [bands]
 
     # Create the cube
