@@ -1,6 +1,6 @@
 cubo.create
 ===========
 
-.. currentmodule:: cubo
+.. currentmodule:: cubo.cubo
 
-.. autofunction:: cubo.create
+.. autofunction:: create
