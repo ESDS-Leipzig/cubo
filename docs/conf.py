@@ -76,7 +76,7 @@ html_logo = "_static/logo.png"
 # Material things
 html_theme_options = {
     # Set the name of the project to appear in the navigation.
-    "nav_title": "     ",
+    "nav_title": "Cubo",
     # Set the color and the accent color
     "color_primary": "white",
     "color_accent": "pink",
@@ -90,6 +90,7 @@ html_theme_options = {
     # If True, show hidden TOC entries
     "globaltoc_includehidden": True,
     "master_doc": False,
+    "logo_icon": "&#xe9fe"
 }
 
 html_sidebars = {
