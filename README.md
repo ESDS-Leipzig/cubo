@@ -179,3 +179,7 @@ da = cubo.create(
 ## License
 
 The project is licensed under the MIT license.
+
+## Logo Attribution
+
+The logo was created using <a href="https://www.flaticon.com/free-icons/dice" title="dice icons">dice icons created by Freepik - Flaticon</a>.
