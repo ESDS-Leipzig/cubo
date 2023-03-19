@@ -212,3 +212,16 @@ License
 
 The project is licensed under the MIT license.
 
+Logo Attribution
+----------------
+
+The logo and images were created using `dice icons created by Freepik - Flaticon <https://www.flaticon.com/free-icons/dice>`_.
+
+.. raw:: html
+
+    <embed>
+        <p align="center">
+            <a href="https://rsc4earth.de/authors/esds/"><img src="https://github.com/davemlz/cubo/raw/main/docs/_static/esds.png" alt="RSC4Earth"></a>
+        </p>
+    </embed>
+
