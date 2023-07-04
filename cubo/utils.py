@@ -88,4 +88,4 @@ def _central_pixel_bbox(
         "coordinates": [polygon_latlon],
     }
 
-    return (bbox_utm, bbox_latlon, utm_coords, f"EPSG:{epsg}")
+    return (bbox_utm, bbox_latlon, utm_coords, int(epsg))
