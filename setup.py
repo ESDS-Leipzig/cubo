@@ -14,7 +14,7 @@ def read(filename):
 
 setup(
     name="cubo",
-    version="0.1.0",
+    version="2023.7.0",
     url="https://github.com/davemlz/cubo",
     license="MIT",
     author="David Montero Loaiza",
