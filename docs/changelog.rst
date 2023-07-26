@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v2023.7.1
+---------
+
+- Replaced :code:`get_all_items` by :code:`item_collection`.
+
 v2023.7.0
 ---------
 
