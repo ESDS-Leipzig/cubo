@@ -98,7 +98,7 @@ def create(
     )
 
     # Get all items and sign if using Planetary Computer
-    items = SEARCH.get_all_items()
+    items = SEARCH.item_collection()
 
     if stac == "https://planetarycomputer.microsoft.com/api/stac/v1":
         items = pc.sign(items)
