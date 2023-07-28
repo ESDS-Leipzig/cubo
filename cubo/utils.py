@@ -1,5 +1,7 @@
 from typing import Any, List, Union
 
+import numpy as np
+import xarray as xr
 from pyproj import CRS, Transformer
 from pyproj.aoi import AreaOfInterest
 from pyproj.database import query_utm_crs_info
@@ -89,3 +91,29 @@ def _central_pixel_bbox(
     }
 
     return (bbox_utm, bbox_latlon, utm_coords, int(epsg))
+
+
+def _compute_distance_to_center(da: xr.DataArray) -> np.ndarray:
+    """Computes the distance from each pixel to the specified center of the data cube.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Data cube to compute the distance from.
+
+    Returns
+    -------
+    np.ndarray
+        Distance from each pixel to the specified center.
+    """
+    # Create meshgrid of coordinates
+    coordinates = np.meshgrid(da.x, da.y)
+
+    # Create meshgrid using just the value of the center coordinates
+    x = (coordinates[0] ** 0) * da.attrs["central_x"]
+    y = (coordinates[1] ** 0) * da.attrs["central_y"]
+
+    # Compute the distance, transposed, so y is first
+    distance_to_center = np.linalg.norm((coordinates) - np.array([x, y]), axis=0).T
+
+    return distance_to_center

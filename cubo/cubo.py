@@ -8,13 +8,13 @@ import rasterio.features
 import stackstac
 import xarray as xr
 
-from .utils import _central_pixel_bbox
+from .utils import _central_pixel_bbox, _compute_distance_to_center
 
 
 def create(
     lat: Union[float, int],
     lon: Union[float, int],
-    collection: str,    
+    collection: str,
     start_date: str,
     end_date: str,
     bands: Optional[Union[str, List[str]]] = None,
@@ -136,6 +136,10 @@ def create(
         central_x=utm_coords[0],
         time_coverage_start=start_date,
         time_coverage_end=end_date,
+    )
+
+    cube = cube.assign_coords(
+        {"cubo:distance_from_center": (["y", "x"], _compute_distance_to_center(cube))}
     )
 
     # New name
