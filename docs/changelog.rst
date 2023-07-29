@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v2023.7.2
+---------
+
+- Added :code:`cubo:distance_from_center` coordinate.
+
 v2023.7.1
 ---------
 
