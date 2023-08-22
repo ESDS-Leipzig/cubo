@@ -145,12 +145,15 @@ def create(
     range_x = np.arange(utm_x, utm_x + edge_size * resolution_x, resolution_x)[0:edge_size]
     
     # from a numpy create a xarray
+    if bands is str:
+        bands = [bands]
+    
     array = xr.DataArray(
         data=np.array(arrays),
         dims=["time", "band", "y", "x"],
         coords= dict(
             time = time,
-            band = [bands],
+            band = bands,
             y = range_y,
             x = range_x
         ),
