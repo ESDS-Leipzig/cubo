@@ -1,10 +1,16 @@
-from typing import Any, List, Union
-
+from typing import Union, List
+from datetime import timedelta, datetime
 import numpy as np
 import xarray as xr
-from pyproj import CRS, Transformer
+from pyproj import Transformer
 from pyproj.aoi import AreaOfInterest
 from pyproj.database import query_utm_crs_info
+
+from google.api_core import retry
+import io
+import ee
+import warnings
+import requests
 
 
 def _central_pixel_bbox(
@@ -41,7 +47,6 @@ def _central_pixel_bbox(
 
     # Save the CRS
     epsg = utm_crs_list[0].code
-    utm_crs = CRS.from_epsg(epsg)
 
     # Initialize a transformer to UTM
     transformer = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
@@ -117,3 +122,196 @@ def _compute_distance_to_center(da: xr.DataArray) -> np.ndarray:
     distance_to_center = np.linalg.norm((coordinates) - np.array([x, y]), axis=0).T
 
     return distance_to_center
+
+
+@retry.Retry()
+def _ee_get_patch(
+    point: tuple,
+    resolution: tuple,
+    dimension: tuple,
+    asset_id: str,
+    band: Union[str, int],
+    crs: str
+) -> np.ndarray:
+    """Get a patch of pixels from an asset, centered on the coords.
+
+    Args:
+        geometry (dict): _description_
+        asset_id (str): _description_
+        band (Union[str, int]): _description_
+
+    Returns:
+        np.ndarray: _description_
+    """
+    # Get the bands
+    if isinstance(band, str):
+        band = [band]
+    
+    # Create the file request
+    request = {
+        'fileFormat': 'NPY',
+        'bandIds': band,
+        'assetId': asset_id,
+        'grid': {
+        'dimensions': {
+            'width': dimension[0],
+            'height': dimension[1]
+        },
+        'affineTransform': {
+            'scaleX': resolution[0],
+            'shearX': 0,
+            'translateX': point[0],
+            'shearY': 0,
+            'scaleY': resolution[1],
+            'translateY': point[1]
+        },
+        'crsCode': crs,
+    }
+    }
+    
+    # Get the data
+    minicube_layer = np.load(io.BytesIO(ee.data.getPixels(request)))
+    minicube_layer = np.stack([minicube_layer[x] for x in band]) # Sort the bands
+    
+    return minicube_layer
+
+
+def _ee_fix_coordinates(
+    projection_data: dict,
+    lon: Union[float, int],
+    lat: Union[float, int]
+) -> tuple:
+    """ Fix the central coordinates of the minicube according to 
+        the EE ImageCollection geotransform.
+
+    Args:
+        projection_data (dict): The projection parameters of the minicube.
+        lon (Union[float, int]): The longitude.
+        lat (Union[float, int]): The latitude.
+
+    Returns:
+        tuple: The new coordinates.
+    """
+    
+    # Get the CRS
+    crs = projection_data["crs"]
+    
+    # Get the coordinates of the upper left corner
+    ulx = projection_data["transform"][2]
+    uly = projection_data["transform"][5]
+    # Get the scale of the minicube
+
+    scale_x = projection_data["transform"][0]
+    scale_y = projection_data["transform"][4]
+    
+    # From WGS84 to UTM     
+    crs = _ee_utils_get_crs(crs) # Useful for ESRI and SR-ORG (e.g. MODIS images)
+    transformer = Transformer.from_crs("EPSG:4326", crs, always_xy=True)
+    utm_coords = transformer.transform(lon, lat)
+    
+    # Fix the coordinates
+    display_x = round((utm_coords[0] - ulx) / scale_x)
+    display_y = round((utm_coords[1] - uly) / scale_y)
+
+    # New coordinates
+    new_x = ulx + display_x * scale_x
+    new_y = uly + display_y * scale_y
+        
+    return new_x, new_y
+        
+
+def _ee_get_projection_metadata(
+    collection: str,
+    ee_geom: ee.Geometry,
+    start_date: str,
+    end_date: str,
+    bands: Union[str, List[str]] = None
+) ->  dict:
+    """ Get the projection parameters for the minicube
+
+    Args:
+        collection (str): The EE ImageCollection.
+        ee_geom (ee.Geometry): A EE Geometry to filter the ImageCollection.
+        start_date (str): The start date.
+        end_date (str): The end date.
+        bands (Optional[str, List[str]], optional): The bands to use. Defaults to None.
+
+    Returns:
+        dict: The projection parameters.
+    """
+    
+    # Get the transform parameters of the first image
+    ee_img = (
+        ee.ImageCollection(collection)
+          .filterBounds(ee_geom)
+          .filterDate(start_date, end_date)
+          .first()
+          .select(bands)
+    )
+    
+    try:
+        info = ee_img.projection().getInfo()
+    except Exception as e:        
+        warnings.warn(
+            "The bands of the specified image contains different projections. Using the first band."
+        )
+        info = ee_img.select(0).projection().getInfo()
+    
+    return info
+    
+
+
+def _ee_fix_date(start_date: str, end_date: str) -> tuple:
+    """Fixes the start and end dates to be used in the GEE API.
+
+    Args:
+        start_date (str): The start date in YYYY-MM-DD format.
+        end_date (str): The end date in YYYY-MM-DD format.
+
+    Returns:
+        tuple: The fixed start and end dates in YYYY-MM-DD format.
+    """
+    delta = timedelta(days=1)
+    
+    start_date = datetime.strptime(start_date, '%Y-%m-%d')
+    start_date = start_date.strftime('%Y-%m-%d')
+    
+    end_date = datetime.strptime(end_date, '%Y-%m-%d') + delta
+    end_date = end_date.strftime('%Y-%m-%d')
+    
+    return start_date, end_date
+
+
+def _ee_utils_get_crs(code):
+    codetype = code.split(":")[0].lower()
+    if codetype == "epsg":
+        return code
+    return _get_crs_web(code)
+
+
+def _get_crs_web(code: str) -> str:
+    """ Convert EPSG, ESRI or SR-ORG code into a OGC WKT
+    
+    Args:
+        code (str): The projection code.
+
+    Returns:
+        str: A string representing the same projection but in WKT2 format.
+    """
+    
+    # Get the code type and the code
+    codetype, ee_code = code.split(":")
+    codetype = codetype.lower()
+    
+    if codetype == "epsg":
+        link = f"https://epsg.io/{ee_code}.wkt"
+        crs_wkt = requests.get(link).text
+    else:
+        link = f"https://spatialreference.org/ref/{codetype}/{ee_code}/ogcwkt/"
+        try:
+            crs_wkt = requests.get(link).text
+        except requests.exceptions.RequestException:
+            print("spatialreference.org is down using web.archive.org ...")
+            link = f"https://web.archive.org/web/https://spatialreference.org/ref/{codetype}/{ee_code}/ogcwkt/"
+            crs_wkt = requests.get(link).text            
+    return crs_wkt

@@ -5,3 +5,4 @@ __author__ = "David Montero Loaiza <dml.mont@gmail.com>"
 __all__ = []
 
 from .cubo import *
+import cubo.earthengine as ee

@@ -1,7 +1,5 @@
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
-import numpy as np
-import pandas as pd
 import planetary_computer as pc
 import pystac_client
 import rasterio.features
