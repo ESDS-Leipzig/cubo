@@ -253,6 +253,7 @@ def _ee_fix_coordinates(
     return {"geo": (new_lon, new_lat), "local": (new_x, new_y)}
 
 
+# collection, ee_geom, start_date, end_date, bands = collection, ee_point, start_date, end_date, bands
 def _ee_get_projection_metadata(
     collection: str,
     ee_geom: ee.Geometry,
@@ -275,7 +276,7 @@ def _ee_get_projection_metadata(
     
     # Get the transform parameters of the first image
     ee_img = (
-        ee.ImageCollection(collection)
+          collection
           .filterBounds(ee_geom)
           .filterDate(start_date, end_date)
           .first()
@@ -284,12 +285,16 @@ def _ee_get_projection_metadata(
     
     try:
         info = ee_img.projection().getInfo()
-    except Exception as e:        
+    except Exception as e:
         warnings.warn(
             "The bands of the specified image contains different projections. Using the first band."
         )
-        info = ee_img.select(0).projection().getInfo()
-    
+        try:
+            info = ee_img.select(0).projection().getInfo()
+        except Exception as e:
+            raise ValueError(
+                "An error occurred while trying to get image metadata. "
+            )
     return info
     
 

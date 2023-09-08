@@ -1,10 +1,9 @@
 from typing import List, Optional, Union
-from pyproj import Transformer
 from datetime import datetime
 
-import concurrent
 import xarray as xr
 import numpy as np
+import concurrent
 import ee
 
 from .utils import (
@@ -76,12 +75,20 @@ def create(
     ... )
     <xarray.DataArray (time: 3, band: 3, x: 32, y: 32)>
     """
-    
+    if isinstance(collection, str):
+        collection = ee.ImageCollection(collection)
+    elif isinstance(collection, ee.image.Image):
+        collection = ee.ImageCollection(collection)
+        start_date="1970-01-01" # Start date of the cube
+        end_date="2100-12-31" # End date of the cube
+        
     # Create a ee.Geometry.Point
     ee_point = ee.Geometry.Point(lon, lat)
     
     # Obtain the projection (CRS and geotransform) parameters for the mini-cube
-    projection_data = _ee_get_projection_metadata(collection, ee_point, start_date, end_date, bands)
+    projection_data = _ee_get_projection_metadata(
+        collection, ee_point, start_date, end_date, bands
+    )
     resolution_x = projection_data["transform"][0]
     resolution_y = projection_data["transform"][4]
     
@@ -113,7 +120,7 @@ def create(
     n_start_date, n_end_date = _ee_fix_date(start_date, end_date)
     
     ee_ic = (
-        ee.ImageCollection(collection)
+        collection
           .filterBounds(ee.Geometry(ee_geom))
           .filterDate(n_start_date, n_end_date)
           .select(bands)
