@@ -176,6 +176,35 @@ def _ee_get_patch(
     return minicube_layer
 
 
+def _ee_get_coordinates(
+    projection_data: dict,
+    lon: Union[float, int],
+    lat: Union[float, int]
+) -> tuple:
+    """ Fix the central coordinates of the minicube according to 
+        the EE ImageCollection geotransform.
+
+    Args:
+        projection_data (dict): The projection parameters of the minicube.
+        lon (Union[float, int]): The longitude.
+        lat (Union[float, int]): The latitude.
+
+    Returns:
+        tuple: The new coordinates.
+    """
+    # Get the CRS
+    crs = projection_data["crs"]
+    
+    # get the CRS in WKT2 format
+    crs_wkt = _ee_utils_get_crs(crs) # Useful for ESRI and SR-ORG (e.g. MODIS images)
+
+    # Local coordinates
+    transformer_local = Transformer.from_crs("EPSG:4326", crs_wkt, always_xy=True)
+    local_coords = transformer_local.transform(lon, lat)
+
+    return {"geo": (lon, lat), "local": local_coords}
+
+
 def _ee_fix_coordinates(
     projection_data: dict,
     lon: Union[float, int],
@@ -199,26 +228,30 @@ def _ee_fix_coordinates(
     # Get the coordinates of the upper left corner
     ulx = projection_data["transform"][2]
     uly = projection_data["transform"][5]
+    
     # Get the scale of the minicube
-
     scale_x = projection_data["transform"][0]
     scale_y = projection_data["transform"][4]
     
     # From WGS84 to UTM     
-    crs = _ee_utils_get_crs(crs) # Useful for ESRI and SR-ORG (e.g. MODIS images)
-    transformer = Transformer.from_crs("EPSG:4326", crs, always_xy=True)
-    utm_coords = transformer.transform(lon, lat)
+    crs_wkt = _ee_utils_get_crs(crs) # Useful for ESRI and SR-ORG (e.g. MODIS images)
+    transformer_local = Transformer.from_crs("EPSG:4326", crs_wkt, always_xy=True)
+    local_coords = transformer_local.transform(lon, lat)
     
     # Fix the coordinates
-    display_x = round((utm_coords[0] - ulx) / scale_x)
-    display_y = round((utm_coords[1] - uly) / scale_y)
+    display_x = round((local_coords[0] - ulx) / scale_x)
+    display_y = round((local_coords[1] - uly) / scale_y)
 
-    # New coordinates
+    # New local coordinates
     new_x = ulx + display_x * scale_x
     new_y = uly + display_y * scale_y
-        
-    return new_x, new_y
-        
+    
+    # New geographic coordinates
+    transformer_geo = Transformer.from_crs(crs_wkt, "EPSG:4326", always_xy=True)
+    new_lon, new_lat = transformer_geo.transform(new_x, new_y)
+    
+    return {"geo": (new_lon, new_lat), "local": (new_x, new_y)}
+
 
 def _ee_get_projection_metadata(
     collection: str,
@@ -282,7 +315,15 @@ def _ee_fix_date(start_date: str, end_date: str) -> tuple:
     return start_date, end_date
 
 
-def _ee_utils_get_crs(code):
+def _ee_utils_get_crs(code: str) -> str:
+    """ Get the EPSG code from a EPSG, ESRI or SR-ORG code
+
+    Args:
+        code (str): The projection code.
+
+    Returns:
+        str: The EPSG code.
+    """
     codetype = code.split(":")[0].lower()
     if codetype == "epsg":
         return code

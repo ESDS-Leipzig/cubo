@@ -1,4 +1,5 @@
 from typing import List, Optional, Union
+from pyproj import Transformer
 from datetime import datetime
 
 import concurrent
@@ -8,7 +9,9 @@ import ee
 
 from .utils import (
     _ee_get_patch, _ee_fix_coordinates, 
-    _ee_get_projection_metadata, _ee_fix_date
+    _ee_get_projection_metadata, 
+    _ee_fix_date,
+    _ee_get_coordinates
 )
 
 
@@ -20,7 +23,8 @@ def create(
     end_date: str,
     bands: Optional[Union[str, List[str]]] = None,
     edge_size: Union[float, int] = 128.0,
-    max_workers: Union[float, int] = 200
+    max_workers: Union[float, int] = 200,
+    fix_coord: bool = True,
 ) -> xr.DataArray:
     """Creates a data cube from a GEE Data Catalog as a :code:`xr.DataArray` object.
 
@@ -46,7 +50,10 @@ def create(
         .. warning::
            If :code:`edge_size` is not a multiple of 2. Cubo will consider 1 pixel 
            more on the left and top edges.
-
+           
+    fix_coord : bool, default = True
+        If True, Cubo will align the coordinates to the collection geotransform.
+        
     Returns
     -------
     xr.DataArray
@@ -82,15 +89,22 @@ def create(
     epsg = projection_data["crs"]
 
     # Align the coordinates to the collection geotransform
-    n_utm_x, n_utm_y  = _ee_fix_coordinates(projection_data, lon, lat)
-    
+    if fix_coord:
+        new_coords = _ee_fix_coordinates(projection_data, lon, lat)
+        n_utm_x, n_utm_y = new_coords["local"]
+        new_lon, new_lat = new_coords["geo"]
+    else:
+        new_coords = _ee_get_coordinates(projection_data, lon, lat)
+        n_utm_x, n_utm_y = new_coords["local"]
+        new_lon, new_lat = new_coords["geo"]
+        
     # Create BBox coordinates according to the edge size
     if edge_size % 2 != 0:
-        utm_x = n_utm_x - (int(edge_size / 2) + 1) * resolution_x
-        utm_y = n_utm_y - (int(edge_size / 2) + 1) * resolution_y
+        n_utm_x = n_utm_x - (int(edge_size / 2) + 1) * resolution_x
+        n_utm_y = n_utm_y - (int(edge_size / 2) + 1) * resolution_y
     else:
-        utm_x = n_utm_x - int(edge_size / 2) * resolution_x
-        utm_y = n_utm_y - int(edge_size / 2) * resolution_y
+        n_utm_x = n_utm_x - int(edge_size / 2) * resolution_x
+        n_utm_y = n_utm_y - int(edge_size / 2) * resolution_y
     
     # Create a EE Point (Center of the minicube)
     ee_geom = ee.Geometry.Point((n_utm_x, n_utm_y), proj=epsg)
@@ -110,12 +124,13 @@ def create(
     img_dates = ee_ic.aggregate_array('system:time_start').getInfo()
     img_dates = [datetime.fromtimestamp(date / 1000) for date in img_dates]    
     zip_list = list(zip(img_ids, img_dates))
-        
+    
+
     # Define the executor
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
     
     # Parallelize the patch download
-    point = (utm_x, utm_y)
+    point = (n_utm_x, n_utm_y)
     resolution = (resolution_x, resolution_y)
     dimension = (edge_size, edge_size)
     future_to_image = {
@@ -141,8 +156,17 @@ def create(
             pass
     
     # Create the xarray coordinates
-    range_y = np.arange(utm_y, utm_y + edge_size * resolution_y, resolution_y)[0:edge_size]
-    range_x = np.arange(utm_x, utm_x + edge_size * resolution_x, resolution_x)[0:edge_size]
+    range_y = np.arange(
+        n_utm_y,
+        n_utm_y + edge_size * resolution_y,
+        resolution_y
+    )[0:edge_size]
+    
+    range_x = np.arange(
+        n_utm_x,
+        n_utm_x + edge_size * resolution_x,
+        resolution_x
+    )[0:edge_size]
     
     # from a numpy create a xarray
     if bands is str:
@@ -162,10 +186,10 @@ def create(
             epsg=epsg,
             resolution=(resolution_x, resolution_y),
             edge_size=edge_size,
-            central_lat=lat,
-            central_lon=lon,
+            central_lat=new_lat,
+            central_lon=new_lon,
             central_y=n_utm_y + resolution_y / 2,
-            central_x=utm_x + resolution_x / 2,
+            central_x=n_utm_x + resolution_x / 2,
             time_coverage_start=start_date,
             time_coverage_end=end_date,
             gee_image_ids = img_ids
