@@ -259,7 +259,8 @@ def _ee_get_projection_metadata(
     ee_geom: ee.Geometry,
     start_date: str,
     end_date: str,
-    bands: Union[str, List[str]] = None
+    bands: Union[str, List[str]],
+    band_projection: str
 ) ->  dict:
     """ Get the projection parameters for the minicube
 
@@ -269,7 +270,7 @@ def _ee_get_projection_metadata(
         start_date (str): The start date.
         end_date (str): The end date.
         bands (Optional[str, List[str]], optional): The bands to use. Defaults to None.
-
+        band_projection (str): The band to use to get the projection parameters.
     Returns:
         dict: The projection parameters.
     """
@@ -290,7 +291,7 @@ def _ee_get_projection_metadata(
             "The bands of the specified image contains different projections. Using the first band."
         )
         try:
-            info = ee_img.select(0).projection().getInfo()
+            info = ee_img.select(band_projection).projection().getInfo()
         except Exception as e:
             raise ValueError(
                 "An error occurred while trying to get image metadata. "

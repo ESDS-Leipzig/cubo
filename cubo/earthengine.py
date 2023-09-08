@@ -18,11 +18,12 @@ def create(
     lat: Union[float, int],
     lon: Union[float, int],
     collection: str,
-    start_date: str,
-    end_date: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     bands: Optional[Union[str, List[str]]] = None,
     edge_size: Union[float, int] = 128.0,
     max_workers: Union[float, int] = 200,
+    band_projection: Optional[str] = 0,
     fix_coord: bool = True,
 ) -> xr.DataArray:
     """Creates a data cube from a GEE Data Catalog as a :code:`xr.DataArray` object.
@@ -45,7 +46,9 @@ def create(
         Name of the band(s) from the collection to use.
     edge_size : float | int, default = 128
         Size of the edge of the cube in pixels. All edges share the same size.
-
+    band_projection : str, default = 0
+        Band to use for the projection metadata.
+            
         .. warning::
            If :code:`edge_size` is not a multiple of 2. Cubo will consider 1 pixel 
            more on the left and top edges.
@@ -87,7 +90,7 @@ def create(
     
     # Obtain the projection (CRS and geotransform) parameters for the mini-cube
     projection_data = _ee_get_projection_metadata(
-        collection, ee_point, start_date, end_date, bands
+        collection, ee_point, start_date, end_date, bands, band_projection
     )
     resolution_x = projection_data["transform"][0]
     resolution_y = projection_data["transform"][4]
