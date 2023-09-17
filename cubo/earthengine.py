@@ -17,13 +17,14 @@ from .utils import (
 def create(
     lat: Union[float, int],
     lon: Union[float, int],
-    collection: str,
+    collection: Union[ee.imagecollection.ImageCollection, ee.image.Image],
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     bands: Optional[Union[str, List[str]]] = None,
-    edge_size: Union[float, int] = 128.0,
+    edge_size: Union[float, int] = 128,
     max_workers: Union[float, int] = 200,
     band_projection: Optional[str] = 0,
+    resolution: Optional[float] = None,
     fix_coord: bool = True,
 ) -> xr.DataArray:
     """Creates a data cube from a GEE Data Catalog as a :code:`xr.DataArray` object.
@@ -70,7 +71,7 @@ def create(
     >>> cubo.create(
     ...     lat=50,
     ...     lon=10,
-    ...     collection="COPERNICUS/S2",
+    ...     collection=ee.ImageCollection("COPERNICUS/S2"),
     ...     bands=["B4","B3","B2"],
     ...     start_date="2021-06-01",
     ...     end_date="2021-06-10",
@@ -78,12 +79,6 @@ def create(
     ... )
     <xarray.DataArray (time: 3, band: 3, x: 32, y: 32)>
     """
-    if isinstance(collection, str):
-        collection = ee.ImageCollection(collection)
-    elif isinstance(collection, ee.image.Image):
-        collection = ee.ImageCollection(collection)
-        start_date="1970-01-01" # Start date of the cube
-        end_date="2100-12-31" # End date of the cube
         
     # Create a ee.Geometry.Point
     ee_point = ee.Geometry.Point(lon, lat)
@@ -92,8 +87,13 @@ def create(
     projection_data = _ee_get_projection_metadata(
         collection, ee_point, start_date, end_date, bands, band_projection
     )
-    resolution_x = projection_data["transform"][0]
-    resolution_y = projection_data["transform"][4]
+    
+    if resolution is None:
+        resolution_x = projection_data["transform"][0]
+        resolution_y = projection_data["transform"][4]
+    else:
+        resolution_x = resolution
+        resolution_y = resolution
     
     # Initialize a transformer to UTM
     epsg = projection_data["crs"]
@@ -120,21 +120,25 @@ def create(
     ee_geom = ee.Geometry.Point((n_utm_x, n_utm_y), proj=epsg)
     
     # Create a EE ImageCollection
-    n_start_date, n_end_date = _ee_fix_date(start_date, end_date)
+    if isinstance(collection, ee.imagecollection.ImageCollection):
+        n_start_date, n_end_date = _ee_fix_date(start_date, end_date)    
+        ee_ic = (
+            collection
+            .filterBounds(ee.Geometry(ee_geom))
+            .filterDate(n_start_date, n_end_date)
+            .select(bands)
+        )
     
-    ee_ic = (
-        collection
-          .filterBounds(ee.Geometry(ee_geom))
-          .filterDate(n_start_date, n_end_date)
-          .select(bands)
-    )
-    
-    # Obtain image IDs
-    img_ids = ee_ic.aggregate_array('system:id').getInfo()
-    img_dates = ee_ic.aggregate_array('system:time_start').getInfo()
-    img_dates = [datetime.fromtimestamp(date / 1000) for date in img_dates]    
-    zip_list = list(zip(img_ids, img_dates))
-    
+        # Obtain image IDs
+        img_ids = ee_ic.aggregate_array('system:id').getInfo()
+        img_dates = ee_ic.aggregate_array('system:time_start').getInfo()
+        img_dates = [datetime.fromtimestamp(date / 1000) for date in img_dates]    
+        zip_list = list(zip(img_ids, img_dates))
+        
+    elif isinstance(collection, ee.image.Image):
+        img_ids = [collection.get("system:id").getInfo()]
+        img_dates = [datetime.fromtimestamp(collection.get("system:time_start").getInfo() / 1000)]
+        zip_list = list(zip(img_ids, img_dates))
 
     # Define the executor
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
@@ -182,8 +186,13 @@ def create(
     if bands is str:
         bands = [bands]
     
+    # np.array tuple to xarray
+    data = np.array(np.array(arrays).tolist()).squeeze()
+    if len(data.shape) == 3:
+        data = data[np.newaxis, :]
+        
     array = xr.DataArray(
-        data=np.array(arrays),
+        data=data,
         dims=["time", "band", "y", "x"],
         coords= dict(
             time = time,
