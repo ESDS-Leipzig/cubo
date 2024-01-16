@@ -15,7 +15,7 @@ Cubo
    <a href="https://github.com/davemlz/cubo"><img src="https://github.com/davemlz/cubo/raw/main/docs/_static/logo.png" alt="cubo"></a>
    </p>
    <p align="center">
-      <em>Easily create EO mini cubes from STAC in Python</em>
+      <em>On-demand Earth System Data Cubes (ESDCs) from STAC in Python</em>
    </p>
    <p align="center">
    <a href='https://pypi.python.org/pypi/cubo'>
@@ -61,8 +61,8 @@ geospatial information. Multiple platforms are using this standard to provide cl
 several datasets. Nice platforms such as Planetary Computer use this standard.
 
 `cubo` is a Python package that provides users of STAC objects an easy way to create 
-Earth Observation (EO) mini cubes. This is perfectly suitable for Machine Learning (ML) / 
-Deep Learning (DL) tasks. You can easily create a lot of mini cubes by just knowing a pair 
+On-demand Earth System Data Cubes (ESDCs). This is perfectly suitable for Machine Learning (ML) / 
+Deep Learning (DL) tasks. You can easily create a lot of ESDCs by just knowing a pair 
 of coordinates and the edge size of the cube in pixels!
 
 Check the simple usage of `cubo` here:
