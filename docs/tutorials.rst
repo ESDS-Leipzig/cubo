@@ -7,3 +7,4 @@ Tutorials
     tutorials/getting_started.ipynb
     tutorials/cube_visualization.ipynb
     tutorials/using_collections.ipynb
+    tutorials/visualization_lexcube.ipynb
