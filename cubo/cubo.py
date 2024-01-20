@@ -21,6 +21,7 @@ def create(
     edge_size: Union[float, int] = 128.0,
     resolution: Union[float, int] = 10.0,
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
+    gee: bool = False,
     **kwargs,
 ) -> xr.DataArray:
     """Creates a data cube from a STAC Catalogue as a :code:`xr.DataArray` object.
@@ -52,6 +53,8 @@ def create(
         Pixel size in meters.
     stac : str, default = 'https://planetarycomputer.microsoft.com/api/stac/v1'
         Endpoint of the STAC Catalogue to use.
+    gee : bool, default = True
+        Whether to use Google Earth Engine. This ignores the 'stac' argument.
     kwargs :
         Additional keyword arguments passed to :code:`pystac_client.Client.search()`.
 
@@ -83,45 +86,104 @@ def create(
         lat, lon, edge_size, resolution
     )
 
-    # Convert UTM Bbox to a Feature
-    bbox_utm = rasterio.features.bounds(bbox_utm)
+    # Use Google Earth Engine
+    if gee:
+        
+        # Try to import ee, otherwise raise an ImportError
+        try:
+            import ee
+        except ImportError:
+            raise ImportError(
+                    '"earthengine-api" and "xee" could not be loaded. Try installing with "pip install cubo[ee]"'
+                )
 
-    # Open the Catalogue
-    CATALOG = pystac_client.Client.open(stac)
+        # Initialize Google Earth Engine with the high volume endpoint
+        ee.Initialize(opt_url='https://earthengine-highvolume.googleapis.com')
 
-    # Do a search
-    SEARCH = CATALOG.search(
-        intersects=bbox_latlon,
-        datetime=f"{start_date}/{end_date}",
-        collections=[collection],
-        **kwargs,
-    )
+        # Get BBox values in latlon
+        west = bbox_latlon['coordinates'][0][0][0]
+        south = bbox_latlon['coordinates'][0][0][1]
+        east = bbox_latlon['coordinates'][0][2][0]
+        north = bbox_latlon['coordinates'][0][2][1]
 
-    # Get all items and sign if using Planetary Computer
-    items = SEARCH.item_collection()
+        # Create the BBox geometry in GEE
+        BBox = ee.Geometry.BBox(west,south,east,north)
 
-    if stac == "https://planetarycomputer.microsoft.com/api/stac/v1":
-        items = pc.sign(items)
+        # If the collection is string then access the Image Collection
+        if isinstance(collection,str):
+            collection = ee.ImageCollection(collection)
 
-    # Put the bands into list if not a list already
-    if not isinstance(bands, list) and bands is not None:
-        bands = [bands]
+        # Do the filtering: Bounds, time, and bands
+        collection = (
+            collection
+                .filterBounds(BBox)
+                .filterDate(start_date,end_date)
+                .select(bands)
+        )
 
-    # Create the cube
-    cube = stackstac.stack(
-        items,
-        assets=bands,
-        resolution=resolution,
-        bounds=bbox_utm,
-        epsg=epsg,
-    )
+        # Return the cube via xee
+        cube = xr.open_dataset(
+            collection,
+            engine="ee",
+            geometry=BBox,
+            scale=resolution,
+            crs=f"EPSG:{epsg}",
+            chunks=dict()
+        )
 
-    # Delete attributes
-    attributes = ["spec", "crs", "transform", "resolution"]
+        # Rename the coords to match stackstac names, also rearrange
+        cube = cube.rename(Y="y",X="x").to_array("band").transpose("time","band","y","x")
 
-    for attribute in attributes:
-        if attribute in cube.attrs:
-            del cube.attrs[attribute]
+        # Delete all attributes
+        cube.attrs = dict()
+
+        # Get the name of the collection
+        collection = collection.get('system:id').getInfo()
+
+        # Override the stac argument using the GEE STAC
+        stac = "https://earthengine-stac.storage.googleapis.com/catalog/catalog.json"
+
+    else:
+
+        # Convert UTM Bbox to a Feature
+        bbox_utm = rasterio.features.bounds(bbox_utm)
+
+        # Open the Catalogue
+        CATALOG = pystac_client.Client.open(stac)
+
+        # Do a search
+        SEARCH = CATALOG.search(
+            intersects=bbox_latlon,
+            datetime=f"{start_date}/{end_date}",
+            collections=[collection],
+            **kwargs,
+        )
+
+        # Get all items and sign if using Planetary Computer
+        items = SEARCH.item_collection()
+
+        if stac == "https://planetarycomputer.microsoft.com/api/stac/v1":
+            items = pc.sign(items)
+
+        # Put the bands into list if not a list already
+        if not isinstance(bands, list) and bands is not None:
+            bands = [bands]
+
+        # Create the cube
+        cube = stackstac.stack(
+            items,
+            assets=bands,
+            resolution=resolution,
+            bounds=bbox_utm,
+            epsg=epsg,
+        )
+
+        # Delete attributes
+        attributes = ["spec", "crs", "transform", "resolution"]
+
+        for attribute in attributes:
+            if attribute in cube.attrs:
+                del cube.attrs[attribute]
 
     # New attributes
     cube.attrs = dict(
