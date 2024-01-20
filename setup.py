@@ -32,6 +32,9 @@ setup(
         "stackstac>=0.4.4",
         "xarray>=2023.6.0",
     ],
+    extras_require={
+        "ee": ["xee>=0.0.6"],
+    },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: MIT License",
