@@ -19,7 +19,7 @@ setup(
     license="MIT",
     author="David Montero Loaiza",
     author_email="dml.mont@gmail.com",
-    description="Easily create EO mini cubes from STAC in Python",
+    description="On-Demand Earth System Data Cubes in Python",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
