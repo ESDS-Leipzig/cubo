@@ -91,10 +91,11 @@ def create(
         
         # Try to import ee, otherwise raise an ImportError
         try:
+            import xee
             import ee
         except ImportError:
             raise ImportError(
-                    '"earthengine-api" and "xee" could not be loaded. Try installing with "pip install cubo[ee]"'
+                    '"earthengine-api" and "xee" could not be loaded. Please install them, or install "cubo" using "pip install cubo[ee]"'
                 )
 
         # Initialize Google Earth Engine with the high volume endpoint
