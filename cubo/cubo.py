@@ -22,6 +22,7 @@ def create(
     resolution: Union[float, int] = 10.0,
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
     gee: bool = False,
+    stackstac_kw: Optional[dict] = None,
     **kwargs,
 ) -> xr.DataArray:
     """Creates a data cube from a STAC Catalogue as a :code:`xr.DataArray` object.
@@ -55,6 +56,11 @@ def create(
         Endpoint of the STAC Catalogue to use.
     gee : bool, default = True
         Whether to use Google Earth Engine. This ignores the 'stac' argument.
+
+        .. versionadded:: 2024.1.0
+
+    stackstac_kw : dict, default = None
+        Keyword arguments for :code:`stackstac` as a dictionary.
 
         .. versionadded:: 2024.1.0
 
@@ -189,6 +195,10 @@ def create(
         if not isinstance(bands, list) and bands is not None:
             bands = [bands]
 
+        # Add stackstac arguments
+        if stackstac_kw is None:
+            stackstac_kw = dict()
+
         # Create the cube
         cube = stackstac.stack(
             items,
@@ -196,6 +206,7 @@ def create(
             resolution=resolution,
             bounds=bbox_utm,
             epsg=epsg,
+            **stackstac_kw,
         )
 
         # Delete attributes
