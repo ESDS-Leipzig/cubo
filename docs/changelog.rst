@@ -1,6 +1,17 @@
 Changelog
 =========
 
+v2024.1.0
+---------
+
+- Added support for Google Earth Engine.
+- Added the :code:`gee` argument to :code:`cubo.create()`.
+
+v2023.12.0
+---------
+
+- Added preservation via Zenodo.
+
 v2023.7.2
 ---------
 
