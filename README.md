@@ -2,7 +2,7 @@
   <a href="https://github.com/davemlz/cubo"><img src="https://github.com/davemlz/cubo/raw/main/docs/_static/logo.png" alt="cubo"></a>
 </p>
 <p align="center">
-    <em>On-demand Earth System Data Cubes (ESDCs) from STAC in Python</em>
+    <em>On-Demand Earth System Data Cubes (ESDCs) in Python</em>
 </p>
 <p align="center">
 <a href='https://pypi.python.org/pypi/cubo'>
@@ -59,10 +59,12 @@
 [SpatioTemporal Asset Catalogs (STAC)](https://stacspec.org/) provide a standardized format that describes
 geospatial information. Multiple platforms are using this standard to provide clients several datasets.
 Nice platforms such as [Planetary Computer](https://planetarycomputer.microsoft.com/) use this standard.
+Additionally, [Google Earth Engine (GEE)](https://developers.google.com/earth-engine/datasets/) 
+also provides a gigantic catalogue that users can harness for different tasks in Python.
 
-`cubo` is a Python package that provides users of STAC objects an easy way to create On-demand Earth System Data Cubes (ESDCs). This is perfectly suitable for Machine Learning (ML) / Deep Learning (DL) tasks. You can easily create a lot of ESDCs by just knowing a pair of coordinates and the edge size of the cube in pixels!
+`cubo` is a Python package that provides users of STAC and GEE an easy way to create On-Demand Earth System Data Cubes (ESDCs). This is perfectly suitable for Deep Learning (DL) tasks. You can easily create a lot of ESDCs by just knowing a pair of coordinates and the edge size of the cube in pixels!
 
-Check the simple usage of `cubo` here:
+Check the simple usage of `cubo` with STAC here:
 
 ```python
 import cubo
@@ -84,6 +86,29 @@ da = cubo.create(
 
 This chunk of code just created an `xr.DataArray` object given a pair of coordinates, the edge size of the cube (in pixels), and additional information to get the data from STAC (Planetary Computer by default, but you can use another provider!). Note that you can also use the resolution you want (in meters) and the bands that you require.
 
+Now check the simple usage of `cubo` with GEE here:
+
+```python
+import cubo
+import xarray as xr
+
+da = cubo.create(
+    lat=51.079225, # Central latitude of the cube
+    lon=10.452173, # Central longitude of the cube
+    collection="COPERNICUS/S2_SR_HARMONIZED", # Id of the GEE collection
+    bands=["B2","B3","B4"], # Bands to retrieve
+    start_date="2016-06-01", # Start date of the cube
+    end_date="2017-07-01", # End date of the cube
+    edge_size=128, # Edge size of the cube (px)
+    resolution=10, # Pixel size of the cube (m)
+    gee=True # Use GEE instead of STAC
+)
+```
+
+This chunk of code is very similar to the STAC-based cubo code. Note that the `collection`
+is now the ID of the GEE collection to use, and note that the `gee` argument must be set to
+`True`.
+
 ## How does it work?
 
 The thing is super easy and simple.
@@ -91,8 +116,9 @@ The thing is super easy and simple.
 1. You have the coordinates of a point of interest. The cube will be created around these coordinates (i.e., these coordinates will be approximately the spatial center of the cube).
 2. Internally, the coordinates are transformed to the projected UTM coordinates [x,y] in meters (i.e., local UTM CRS). They are rounded to the closest pair of coordinates that are divisible by the resolution you requested.
 3. The edge size you provide is used to create a Bounding Box (BBox) for the cube in the local UTM CRS given the exact amount of pixels (Note that the edge size should be a multiple of 2, otherwise it will be rounded, usual edge sizes for ML are 64, 128, 256, 512, etc.).
-4. Additional information is used to retrieve the data from the STAC catalogue: starts and end dates, name of the collection, endpoint of the catalogue, etc.
-5. Then, by using `stackstac` and `pystac_client` the mini cube is retrieved as a `xr. DataArray`.
+4. Additional information is used to retrieve the data from the STAC catalogue or from GEE: starts and end dates, name of the collection, endpoint of the catalogue (ignored for GEE), etc.
+5. Then, by using `stackstac` and `pystac_client` the cube is retrieved as a `xr. DataArray`. In the case of GEE, the cube is retrieved
+via `xee`.
 6. Success! That's what `cubo` is doing for you, and you just need to provide the coordinates, the edge size, and the additional info to get the cube.
 
 ## Installation
@@ -101,6 +127,12 @@ Install the latest version from PyPI:
 
 ```
 pip install cubo
+```
+
+Install `cubo` with the required GEE dependencies from PyPI:
+
+```
+pip install cubo[ee]
 ```
 
 Upgrade `cubo` by running:
