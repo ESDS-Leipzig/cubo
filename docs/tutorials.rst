@@ -9,3 +9,4 @@ Tutorials
     tutorials/using_collections.ipynb
     tutorials/visualization_lexcube.ipynb
     tutorials/using_gee.ipynb
+    tutorials/stackstac.ipynb
