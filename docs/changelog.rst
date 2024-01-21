@@ -6,6 +6,8 @@ v2024.1.0
 
 - Added support for Google Earth Engine.
 - Added the :code:`gee` argument to :code:`cubo.create()`.
+- Added support for :code:`stackstac` keyword arguments.
+- Added the :code:`stackstac_kw` argument to :code:`cubo.create()`.
 
 v2023.12.0
 ---------
