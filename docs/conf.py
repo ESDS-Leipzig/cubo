@@ -27,7 +27,7 @@ copyright = "2021, David Montero Loaiza"
 author = "David Montero Loaiza"
 
 # The full version, including alpha/beta/rc tags
-release = "2023.7.2"
+release = "2024.1.0"
 
 
 # -- General configuration ---------------------------------------------------
