@@ -55,6 +55,9 @@ def create(
         Endpoint of the STAC Catalogue to use.
     gee : bool, default = True
         Whether to use Google Earth Engine. This ignores the 'stac' argument.
+
+        .. versionadded:: 2024.1.0
+
     kwargs :
         Additional keyword arguments passed to :code:`pystac_client.Client.search()`.
 
@@ -80,6 +83,22 @@ def create(
     ...     resolution=10,
     ... )
     <xarray.DataArray (time: 3, band: 3, x: 32, y: 32)>
+
+    Create a Sentinel-2 L2A data cube with an edge size of 128 px from Google Earth Engine:
+
+    >>> import cubo
+    >>> cubo.create(
+    ...     lat=51.079225,
+    ...     lon=10.452173,
+    ...     collection="COPERNICUS/S2_SR_HARMONIZED",
+    ...     bands=["B2","B3","B4"],
+    ...     start_date="2016-06-01",
+    ...     end_date="2017-07-01",
+    ...     edge_size=128,
+    ...     resolution=10,
+    ...     gee=True,
+    ... )
+    <xarray.DataArray (time: 27, band: 3, x: 128, y: 128)>
     """
     # Get the BBox and EPSG
     bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
