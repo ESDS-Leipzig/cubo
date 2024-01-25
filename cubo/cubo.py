@@ -1,4 +1,5 @@
 from typing import Any, List, Optional, Union
+from scipy import constants
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,7 @@ def create(
     end_date: str,
     bands: Optional[Union[str, List[str]]] = None,
     edge_size: Union[float, int] = 128.0,
+    units: str = "px",
     resolution: Union[float, int] = 10.0,
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
     gee: bool = False,
@@ -45,10 +47,22 @@ def create(
     bands : str | List[str], default = None
         Name of the band(s) from the collection to use.
     edge_size : float | int, default = 128
-        Size of the edge of the cube in pixels. All edges share the same size.
+        Size of the edge of the cube in the units specified by :code:`units`. All edges share the same size.
 
         .. warning::
            If :code:`edge_size` is not a multiple of 2, it will be rounded.
+
+    units : str, default = 'px'
+        Units of the provided edge size in :code:`edge_size`. Must be 'px' (pixels), 'm' (meters), or a unit
+        name in https://docs.scipy.org/doc/scipy/reference/constants.html#units.
+
+        .. versionadded:: 2024.1.1
+
+        .. warning::
+           Note that when :code:`units!='px'` the edge size will be transformed to meters (if :code:`units!='m'`).
+           Furthermore, the edge size will be converted to pixels (using :code:`edge_size/resolution`)
+           and rounded (see :code:`edge_size`). Therefore, the edge size when :code:`units!='px'` is just an approximation
+           if its value in meters is not divisible by the requested resolution.
 
     resolution : float | int, default = 10
         Pixel size in meters.
@@ -106,6 +120,13 @@ def create(
     ... )
     <xarray.DataArray (time: 27, band: 3, x: 128, y: 128)>
     """
+    # Harmonize units to pixels
+    if units != "px":
+        if units == "m":
+            edge_size = edge_size/resolution
+        else:
+            edge_size = (edge_size * getattr(constants,units))/resolution
+
     # Get the BBox and EPSG
     bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
         lat, lon, edge_size, resolution
@@ -216,13 +237,17 @@ def create(
             if attribute in cube.attrs:
                 del cube.attrs[attribute]
 
+    # Rounded edge size
+    rounded_edge_size = cube.x.shape[0]
+
     # New attributes
     cube.attrs = dict(
         collection=collection,
         stac=stac,
         epsg=epsg,
         resolution=resolution,
-        edge_size=edge_size,
+        edge_size=rounded_edge_size,
+        edge_size_m=rounded_edge_size*resolution,
         central_lat=lat,
         central_lon=lon,
         central_y=utm_coords[1],
