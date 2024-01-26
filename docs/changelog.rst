@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v2024.1.1
+---------
+
+- Added the :code:`units` argument to :code:`cubo.create()`.
+- Added support for :code:`scipy.constants` units.
+
 v2024.1.0
 ---------
 
