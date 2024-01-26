@@ -1,5 +1,4 @@
 from typing import Any, List, Optional, Union
-from scipy import constants
 
 import numpy as np
 import pandas as pd
@@ -8,6 +7,7 @@ import pystac_client
 import rasterio.features
 import stackstac
 import xarray as xr
+from scipy import constants
 
 from .utils import _central_pixel_bbox, _compute_distance_to_center
 
@@ -123,9 +123,9 @@ def create(
     # Harmonize units to pixels
     if units != "px":
         if units == "m":
-            edge_size = edge_size/resolution
+            edge_size = edge_size / resolution
         else:
-            edge_size = (edge_size * getattr(constants,units))/resolution
+            edge_size = (edge_size * getattr(constants, units)) / resolution
 
     # Get the BBox and EPSG
     bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
@@ -134,38 +134,35 @@ def create(
 
     # Use Google Earth Engine
     if gee:
-        
+
         # Try to import ee, otherwise raise an ImportError
         try:
-            import xee
             import ee
+            import xee
         except ImportError:
             raise ImportError(
-                    '"earthengine-api" and "xee" could not be loaded. Please install them, or install "cubo" using "pip install cubo[ee]"'
-                )
+                '"earthengine-api" and "xee" could not be loaded. Please install them, or install "cubo" using "pip install cubo[ee]"'
+            )
 
         # Initialize Google Earth Engine with the high volume endpoint
-        ee.Initialize(opt_url='https://earthengine-highvolume.googleapis.com')
+        ee.Initialize(opt_url="https://earthengine-highvolume.googleapis.com")
 
         # Get BBox values in latlon
-        west = bbox_latlon['coordinates'][0][0][0]
-        south = bbox_latlon['coordinates'][0][0][1]
-        east = bbox_latlon['coordinates'][0][2][0]
-        north = bbox_latlon['coordinates'][0][2][1]
+        west = bbox_latlon["coordinates"][0][0][0]
+        south = bbox_latlon["coordinates"][0][0][1]
+        east = bbox_latlon["coordinates"][0][2][0]
+        north = bbox_latlon["coordinates"][0][2][1]
 
         # Create the BBox geometry in GEE
-        BBox = ee.Geometry.BBox(west,south,east,north)
+        BBox = ee.Geometry.BBox(west, south, east, north)
 
         # If the collection is string then access the Image Collection
-        if isinstance(collection,str):
+        if isinstance(collection, str):
             collection = ee.ImageCollection(collection)
 
         # Do the filtering: Bounds, time, and bands
         collection = (
-            collection
-                .filterBounds(BBox)
-                .filterDate(start_date,end_date)
-                .select(bands)
+            collection.filterBounds(BBox).filterDate(start_date, end_date).select(bands)
         )
 
         # Return the cube via xee
@@ -175,17 +172,21 @@ def create(
             geometry=BBox,
             scale=resolution,
             crs=f"EPSG:{epsg}",
-            chunks=dict()
+            chunks=dict(),
         )
 
         # Rename the coords to match stackstac names, also rearrange
-        cube = cube.rename(Y="y",X="x").to_array("band").transpose("time","band","y","x")
+        cube = (
+            cube.rename(Y="y", X="x")
+            .to_array("band")
+            .transpose("time", "band", "y", "x")
+        )
 
         # Delete all attributes
         cube.attrs = dict()
 
         # Get the name of the collection
-        collection = collection.get('system:id').getInfo()
+        collection = collection.get("system:id").getInfo()
 
         # Override the stac argument using the GEE STAC
         stac = "https://earthengine-stac.storage.googleapis.com/catalog/catalog.json"
@@ -247,7 +248,7 @@ def create(
         epsg=epsg,
         resolution=resolution,
         edge_size=rounded_edge_size,
-        edge_size_m=rounded_edge_size*resolution,
+        edge_size_m=rounded_edge_size * resolution,
         central_lat=lat,
         central_lon=lon,
         central_y=utm_coords[1],

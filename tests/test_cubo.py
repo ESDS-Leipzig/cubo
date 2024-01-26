@@ -35,7 +35,7 @@ class Test(unittest.TestCase):
             end_date="2021-06-10",
             edge_size=32,
             resolution=10,
-            stackstac_kw=dict(xy_coords='center')
+            stackstac_kw=dict(xy_coords="center"),
         )
         self.assertIsInstance(da, xr.DataArray)
 
