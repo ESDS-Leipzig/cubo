@@ -10,3 +10,4 @@ Tutorials
     tutorials/visualization_lexcube.ipynb
     tutorials/using_gee.ipynb
     tutorials/stackstac.ipynb
+    tutorials/edge_size_units.ipynb
