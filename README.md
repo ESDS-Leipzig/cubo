@@ -172,6 +172,41 @@ da = cubo.create(
 )
 ```
 
+### Using different units for `edge_size`
+
+By default, the units of `edge_size` are pixels. But you can modify this using the `units` argument:
+
+```python
+da = cubo.create(
+    lat=4.31,
+    lon=-76.2,
+    collection="sentinel-2-l2a",
+    bands=["B02","B03","B04"],
+    start_date="2021-06-01",
+    end_date="2021-06-10",
+    edge_size=1500,
+    units="m",
+    resolution=10,
+)
+```
+
+> [!TIP]
+> You can use "px" (pixels), "m" (meters), or any unit available in [`scipy.constants`](https://docs.scipy.org/doc/scipy/reference/constants.html#units).
+
+```python
+da = cubo.create(
+    lat=4.31,
+    lon=-76.2,
+    collection="sentinel-2-l2a",
+    bands=["B02","B03","B04"],
+    start_date="2021-06-01",
+    end_date="2021-06-10",
+    edge_size=1.5,
+    units="kilo",
+    resolution=10,
+)
+```
+
 ### Using another endpoint
 
 By default, `cubo` uses Planetary Computer. But you can use another STAC provider endpoint if you want:
