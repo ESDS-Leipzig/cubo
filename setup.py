@@ -14,7 +14,7 @@ def read(filename):
 
 setup(
     name="cubo",
-    version="2024.1.0",
+    version="2024.1.1",
     url="https://github.com/davemlz/cubo",
     license="MIT",
     author="David Montero Loaiza",
@@ -29,6 +29,7 @@ setup(
         "pandas>=2.0.3",
         "planetary_computer>=1.0.0",
         "pystac_client>=0.7.2",
+        "scipy>=1.12.0",
         "stackstac>=0.4.4",
         "xarray>=2023.6.0",
     ],
