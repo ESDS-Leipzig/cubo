@@ -27,6 +27,9 @@ Cubo
    <a href='https://cubo.readthedocs.io/en/latest/?badge=latest'>
       <img src='https://readthedocs.org/projects/cubo/badge/?version=latest' alt='Documentation Status' />
    </a>
+   <a href='https://arxiv.org/abs/2404.13105'>
+    <img src='https://img.shields.io/badge/arXiv-2404.13105-b31b1b.svg' alt='Documentation Status' />
+   </a>
    <a href="https://github.com/davemlz/cubo/actions/workflows/tests.yml" target="_blank">
       <img src="https://github.com/davemlz/cubo/actions/workflows/tests.yml/badge.svg" alt="Tests">
    </a>
