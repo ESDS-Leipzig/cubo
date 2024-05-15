@@ -59,6 +59,9 @@
 
 ---
 
+> [!IMPORTANT]  
+> Our `cubo` paper is out! Check it here: **[Montero, D., Aybar, C., Ji, C., Kraemer, G., Sochting, M., Teber, K., & Mahecha, M.D. (2024). On-Demand Earth System Data Cubes.](https://arxiv.org/abs/2404.13105)**
+
 ## Overview
 
 [SpatioTemporal Asset Catalogs (STAC)](https://stacspec.org/) provide a standardized format that describes
