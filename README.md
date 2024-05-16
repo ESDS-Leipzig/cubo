@@ -59,8 +59,13 @@
 
 ---
 
+## News
+
 > [!IMPORTANT]  
-> Our `cubo` paper is out! Check it here: **[Montero, D., Aybar, C., Ji, C., Kraemer, G., Sochting, M., Teber, K., & Mahecha, M.D. (2024). On-Demand Earth System Data Cubes.](https://arxiv.org/abs/2404.13105)**
+> :star: **Pinned (2024-04-19)**: Our `cubo` paper (preprint) is out in arXiv! Check it here: **[Montero, D., Aybar, C., Ji, C., Kraemer, G., Sochting, M., Teber, K., & Mahecha, M.D. (2024). On-Demand Earth System Data Cubes.](https://arxiv.org/abs/2404.13105)**
+
+> [!NOTE]  
+> **Upcoming Event (2024-07-07)**: `cubo` will be presented at IGARSS24! More info here: **[2024 IEEE International Geoscience and Remote Sensing Symposium "Acting for Sustainability and Resilience", 7 - 12 July, 2024 • Athens, Greece.](https://www.2024.ieeeigarss.org/)**
 
 ## Overview
 
