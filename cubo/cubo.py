@@ -25,6 +25,7 @@ def create(
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
     gee: bool = False,
     stackstac_kw: Optional[dict] = None,
+    e7g: bool = False,
     **kwargs,
 ) -> xr.DataArray:
     """Creates a data cube from a STAC Catalogue as a :code:`xr.DataArray` object.
@@ -78,6 +79,11 @@ def create(
 
         .. versionadded:: 2024.1.0
 
+    e7g : bool
+        Whether to use Equi7Grid instead of UTM.
+
+        .. versionadded:: 2024.6.0
+
     kwargs :
         Additional keyword arguments passed to :code:`pystac_client.Client.search()`.
 
@@ -128,8 +134,8 @@ def create(
             edge_size = (edge_size * getattr(constants, units)) / resolution
 
     # Get the BBox and EPSG
-    bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
-        lat, lon, edge_size, resolution
+    bbox_proj, bbox_latlon, proj_coords, epsg = _central_pixel_bbox(
+        lat, lon, edge_size, resolution, e7g
     )
 
     # Use Google Earth Engine
@@ -194,7 +200,7 @@ def create(
     else:
 
         # Convert UTM Bbox to a Feature
-        bbox_utm = rasterio.features.bounds(bbox_utm)
+        bbox_proj = rasterio.features.bounds(bbox_proj)
 
         # Open the Catalogue
         CATALOG = pystac_client.Client.open(stac)
@@ -226,7 +232,7 @@ def create(
             items,
             assets=bands,
             resolution=resolution,
-            bounds=bbox_utm,
+            bounds=bbox_proj,
             epsg=epsg,
             **stackstac_kw,
         )
@@ -251,8 +257,8 @@ def create(
         edge_size_m=rounded_edge_size * resolution,
         central_lat=lat,
         central_lon=lon,
-        central_y=utm_coords[1],
-        central_x=utm_coords[0],
+        central_y=proj_coords[1],
+        central_x=proj_coords[0],
         time_coverage_start=start_date,
         time_coverage_end=end_date,
     )
