@@ -93,7 +93,7 @@ def _central_pixel_bbox(
     Returns
     -------
     tuple
-        BBox in Equi7Grid coordinates, BBox in latlon, and EPSG.
+        BBox in Equi7Grid or UTM coordinates, BBox in latlon, and EPSG.
     """
     # Get EPSG
     epsg = _get_epsg(lat, lon, edge_size, resolution, e7g)
