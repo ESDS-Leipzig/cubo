@@ -26,6 +26,7 @@ setup(
     package_data={"cubo": ["data/*.json"]},
     install_requires=[
         "dask>=2023.7.0",
+        "numpy<2.0.0",
         "pandas>=2.0.3",
         "planetary_computer>=1.0.0",
         "pystac_client>=0.7.2",
