@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v2024.6.0
+---------
+
+- Pinned: :code:`numpy<2.0.0` as :code:`stackstac` breaks with :code:`numpy>=2.0.0`.
+
 v2024.1.1
 ---------
 
