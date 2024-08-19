@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v2024.8.0
+---------
+
+- Fix: Avoind Google Earth Engine initialization within :code:`cubo`.
+
 v2024.6.0
 ---------
 
