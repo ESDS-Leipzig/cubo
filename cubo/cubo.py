@@ -145,7 +145,8 @@ def create(
             )
 
         # Initialize Google Earth Engine with the high volume endpoint
-        ee.Initialize(opt_url="https://earthengine-highvolume.googleapis.com")
+        # User must do this before using cubo
+        # ee.Initialize(opt_url="https://earthengine-highvolume.googleapis.com")
 
         # Get BBox values in latlon
         west = bbox_latlon["coordinates"][0][0][0]
