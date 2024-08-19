@@ -64,9 +64,6 @@
 > [!IMPORTANT]  
 > :star: **Pinned (2024-04-19)**: Our `cubo` paper (preprint) is out in arXiv! Check it here: **[Montero, D., Aybar, C., Ji, C., Kraemer, G., Sochting, M., Teber, K., & Mahecha, M.D. (2024). On-Demand Earth System Data Cubes.](https://arxiv.org/abs/2404.13105)**
 
-> [!NOTE]  
-> **Upcoming Event (2024-07-07)**: `cubo` will be presented at IGARSS24! More info here: **[2024 IEEE International Geoscience and Remote Sensing Symposium "Acting for Sustainability and Resilience", 7 - 12 July, 2024 • Athens, Greece.](https://www.2024.ieeeigarss.org/)**
-
 ## Overview
 
 [SpatioTemporal Asset Catalogs (STAC)](https://stacspec.org/) provide a standardized format that describes
@@ -265,13 +262,15 @@ The project is licensed under the MIT license.
 If you use this work, please consider citing the following paper:
 
 ```bibtex
-@misc{montero2024ondemand,
-      title={On-Demand Earth System Data Cubes}, 
-      author={David Montero and César Aybar and Chaonan Ji and Guido Kraemer and Maximilian Söchting and Khalil Teber and Miguel D. Mahecha},
-      year={2024},
-      eprint={2404.13105},
-      archivePrefix={arXiv},
-      primaryClass={cs.DB}
+@article{montero2024cubo,
+  doi = {10.48550/ARXIV.2404.13105},
+  url = {https://arxiv.org/abs/2404.13105},
+  author = {Montero,  David and Aybar,  César and Ji,  Chaonan and Kraemer,  Guido and S\"{o}chting,  Maximilian and Teber,  Khalil and Mahecha,  Miguel D.},
+  keywords = {Databases (cs.DB),  Computer Vision and Pattern Recognition (cs.CV),  Machine Learning (cs.LG),  FOS: Computer and information sciences,  FOS: Computer and information sciences},
+  title = {On-Demand Earth System Data Cubes},
+  publisher = {arXiv},
+  year = {2024},
+  copyright = {Creative Commons Attribution 4.0 International}
 }
 ```
 
