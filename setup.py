@@ -26,12 +26,12 @@ setup(
     package_data={"cubo": ["data/*.json"]},
     install_requires=[
         "dask>=2023.7.0",
-        "numpy>=2.0.0",
+        "numpy",
         "pandas>=2.0.3",        
         "planetary_computer>=1.0.0",
         "pystac_client>=0.7.2",
         "scipy>=1.12.0",
-        "stackstac>=0.4.4",
+        "stackstac>=0.5.1",
         "xarray>=2023.6.0",
     ],
     extras_require={
