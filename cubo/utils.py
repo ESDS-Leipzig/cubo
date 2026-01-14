@@ -7,6 +7,93 @@ from pyproj.aoi import AreaOfInterest
 from pyproj.database import query_utm_crs_info
 
 
+def _bbox_to_utm(
+    bbox: tuple,
+    resolution: Union[float, int],
+) -> tuple:
+    """Converts a bounding box in EPSG:4326 to UTM coordinates.
+
+    Parameters
+    ----------
+    bbox : tuple
+        Bounding box as (minx, miny, maxx, maxy) in EPSG:4326.
+    resolution : int | float
+        Spatial resolution to use.
+
+    Returns
+    -------
+    tuple
+        BBox in UTM coordinates, BBox in latlon, center UTM coords, and EPSG.
+    """
+    minx, miny, maxx, maxy = bbox
+    
+    # Calculate center for UTM zone detection
+    center_lon = (minx + maxx) / 2
+    center_lat = (miny + maxy) / 2
+    
+    # Get the UTM EPSG from center
+    utm_crs_list = query_utm_crs_info(
+        datum_name="WGS 84",
+        area_of_interest=AreaOfInterest(
+            center_lon, center_lat, center_lon, center_lat
+        ),
+    )
+    
+    epsg = utm_crs_list[0].code
+    
+    # Initialize transformer to UTM
+    transformer = Transformer.from_crs(
+        "EPSG:4326", f"EPSG:{epsg}", always_xy=True
+    )
+    
+    # Transform bbox corners to UTM
+    W, S = transformer.transform(minx, miny)
+    E, N = transformer.transform(maxx, maxy)
+    
+    # Round to resolution - expand to cover fully
+    W = np.floor(W / resolution) * resolution
+    S = np.floor(S / resolution) * resolution
+    E = np.ceil(E / resolution) * resolution
+    N = np.ceil(N / resolution) * resolution
+    
+    # Create polygon from BBox coordinates
+    polygon = [
+        [W, S],
+        [E, S],
+        [E, N],
+        [W, N],
+        [W, S],
+    ]
+    
+    # Create latlon polygon
+    polygon_latlon = [
+        [minx, miny],
+        [maxx, miny],
+        [maxx, maxy],
+        [minx, maxy],
+        [minx, miny],
+    ]
+    
+    # Create UTM BBox
+    bbox_utm = {
+        "type": "Polygon",
+        "coordinates": [polygon],
+    }
+    
+    # Create latlon BBox
+    bbox_latlon = {
+        "type": "Polygon",
+        "coordinates": [polygon_latlon],
+    }
+    
+    # Calculate center in UTM
+    center_x = (W + E) / 2
+    center_y = (S + N) / 2
+    utm_coords = (center_x, center_y)
+    
+    return (bbox_utm, bbox_latlon, utm_coords, int(epsg))
+
+
 def _central_pixel_bbox(
     lat: Union[float, int],
     lon: Union[float, int],
@@ -55,7 +142,9 @@ def _central_pixel_bbox(
     utm_coords = transformer.transform(lon, lat)
 
     # Round the coordinates
-    utm_coords_round = [round(coord / resolution) * resolution for coord in utm_coords]
+    utm_coords_round = [
+        round(coord / resolution) * resolution for coord in utm_coords
+    ]
 
     # Buffer size
     buffer = round(edge_size * resolution / 2)
@@ -76,7 +165,9 @@ def _central_pixel_bbox(
     ]
 
     # Transform vertices of polygon to latlon
-    polygon_latlon = [list(inverse_transformer.transform(x[0], x[1])) for x in polygon]
+    polygon_latlon = [
+        list(inverse_transformer.transform(x[0], x[1])) for x in polygon
+    ]
 
     # Create UTM BBox
     bbox_utm = {
@@ -114,6 +205,8 @@ def _compute_distance_to_center(da: xr.DataArray) -> np.ndarray:
     y = (coordinates[1] ** 0) * da.attrs["central_y"]
 
     # Compute the distance, transposed, so y is first
-    distance_to_center = np.linalg.norm((coordinates) - np.array([x, y]), axis=0).T
+    distance_to_center = np.linalg.norm(
+        (coordinates) - np.array([x, y]), axis=0
+    ).T
 
     return distance_to_center

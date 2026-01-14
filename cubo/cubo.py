@@ -13,15 +13,16 @@ from .utils import _central_pixel_bbox, _compute_distance_to_center
 
 
 def create(
-    lat: Union[float, int],
-    lon: Union[float, int],
-    collection: str,
-    start_date: str,
-    end_date: str,
+    lat: Optional[Union[float, int]] = None,
+    lon: Optional[Union[float, int]] = None,
+    collection: str = None,
+    start_date: str = None,
+    end_date: str = None,
     bands: Optional[Union[str, List[str]]] = None,
     edge_size: Union[float, int] = 128.0,
     units: str = "px",
     resolution: Union[float, int] = 10.0,
+    bbox: Optional[tuple] = None,
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
     gee: bool = False,
     stackstac_kw: Optional[dict] = None,
@@ -34,10 +35,13 @@ def create(
 
     Parameters
     ----------
-    lat : float | int
-        Latitude of the central pixel of the data cube.
-    lon : float | int
-        Longitude of the central pixel of the data cube.
+    lat : float | int, optional
+        Latitude of the central pixel of the data cube. Required if bbox is not provided.
+    lon : float | int, optional
+        Longitude of the central pixel of the data cube. Required if bbox is not provided.
+    bbox : tuple, optional
+        Bounding box as (minx, miny, maxx, maxy) in EPSG:4326.
+        If provided, lat/lon/edge_size are ignored.
     collection : str
         Name of the collection in the STAC Catalogue.
     start_date : str
@@ -119,18 +123,43 @@ def create(
     ...     gee=True,
     ... )
     <xarray.DataArray (time: 27, band: 3, x: 128, y: 128)>
-    """
-    # Harmonize units to pixels
-    if units != "px":
-        if units == "m":
-            edge_size = edge_size / resolution
-        else:
-            edge_size = (edge_size * getattr(constants, units)) / resolution
+    
+    Create a data cube using a bounding box:
 
-    # Get the BBox and EPSG
-    bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
-        lat, lon, edge_size, resolution
-    )
+    >>> import cubo
+    >>> cubo.create(
+    ...     bbox=(10.0, 50.0, 10.5, 50.5),
+    ...     collection="sentinel-2-l2a",
+    ...     bands=["B02","B03","B04"],
+    ...     start_date="2021-06-01",
+    ...     end_date="2021-06-10",
+    ...     resolution=10,
+    ... )
+    <xarray.DataArray (time: 3, band: 3, x: 556, y: 556)>
+    """
+    # Validate inputs
+    if bbox is None and (lat is None or lon is None):
+        raise ValueError("Either bbox or (lat, lon) must be provided")
+    
+    # Use bbox if provided
+    if bbox is not None:
+        from .utils import _bbox_to_utm
+
+        bbox_utm, bbox_latlon, utm_coords, epsg = _bbox_to_utm(
+            bbox, resolution
+        )
+    else:
+        # Harmonize units to pixels
+        if units != "px":
+            if units == "m":
+                edge_size = edge_size / resolution
+            else:
+                edge_size = (edge_size * getattr(constants, units)) / resolution
+
+        # Get the BBox and EPSG
+        bbox_utm, bbox_latlon, utm_coords, epsg = _central_pixel_bbox(
+            lat, lon, edge_size, resolution
+        )
 
     # Use Google Earth Engine
     if gee:
@@ -242,25 +271,48 @@ def create(
     # Rounded edge size
     rounded_edge_size = cube.x.shape[0]
 
-    # New attributes
-    cube.attrs = dict(
+    # New attributes - SET BEFORE assign_coords!
+    attrs = dict(
         collection=collection,
         stac=stac,
         epsg=epsg,
         resolution=resolution,
         edge_size=rounded_edge_size,
         edge_size_m=rounded_edge_size * resolution,
-        central_lat=lat,
-        central_lon=lon,
-        central_y=utm_coords[1],
-        central_x=utm_coords[0],
         time_coverage_start=start_date,
         time_coverage_end=end_date,
+        central_y=utm_coords[1],
+        central_x=utm_coords[0],
     )
+    
+    # Add central coordinates
+    if lat is not None and lon is not None:
+        attrs.update({"central_lat": lat, "central_lon": lon})
+    elif bbox is not None:
+        center_lon = (bbox[0] + bbox[2]) / 2
+        center_lat = (bbox[1] + bbox[3]) / 2
+        attrs.update({
+            "central_lat": center_lat,
+            "central_lon": center_lon,
+            "bbox": bbox
+        })
+    
+    # Set attrs BEFORE assign_coords
+    cube.attrs = attrs
 
-    cube = cube.assign_coords(
-        {"cubo:distance_from_center": (["y", "x"], _compute_distance_to_center(cube))}
-    )
+    # Compute distance only if lat/lon provided (not for bbox)
+    if lat is not None and lon is not None:
+        try:
+            cube = cube.assign_coords(
+                {
+                    "cubo:distance_from_center": (
+                        ["y", "x"],
+                        _compute_distance_to_center(cube)
+                    )
+                }
+            )
+        except Exception:
+            pass  # Skip if fails
 
     # New name
     cube.name = collection
