@@ -163,6 +163,27 @@ Install the latest dev version from GitHub by running:
 uv pip install git+https://github.com/davemlz/cubo
 ```
 
+## Publishing (PyPI) with uv
+
+1. Bump the version in [pyproject.toml](pyproject.toml) and update the changelog.
+2. Build the sdist and wheel:
+
+```
+uv build
+```
+
+3. (Optional) Upload to TestPyPI first:
+
+```
+uv publish --repository testpypi --token <PYPI_TOKEN>
+```
+
+4. Publish to PyPI:
+
+```
+uv publish --token <PYPI_TOKEN>
+```
+
 ## Features
 
 ### Main function: `create()`
