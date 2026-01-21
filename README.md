@@ -133,22 +133,22 @@ via `xee`.
 
 ## Installation
 
-Install the latest version from PyPI:
+Install the latest version from PyPI with uv:
 
 ```
-pip install cubo
+uv add cubo
 ```
 
 Install `cubo` with the required GEE dependencies from PyPI:
 
 ```
-pip install cubo[ee]
+uv pip install "cubo[ee]"
 ```
 
 Upgrade `cubo` by running:
 
 ```
-pip install -U cubo
+uv pip install -U cubo
 ```
 
 Install the latest version from conda-forge:
@@ -160,7 +160,7 @@ conda install -c conda-forge cubo
 Install the latest dev version from GitHub by running:
 
 ```
-pip install git+https://github.com/davemlz/cubo
+uv pip install git+https://github.com/davemlz/cubo
 ```
 
 ## Features

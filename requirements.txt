@@ -1,9 +1,1 @@
-dask
-numpy
-pandas
-planetary_computer
-pyproj
-pystac_client
-rasterio
-stackstac
-xarray
+.
