@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v2026.1.0
+---------
+
+- Chore: Migrated packaging and publishing workflow to uv.
+
 v2024.8.0
 ---------
 

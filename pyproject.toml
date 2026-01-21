@@ -4,34 +4,39 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cubo"
-version = "2024.8.0"
+version = "2026.1.0"
 description = "On-Demand Earth System Data Cubes in Python"
 readme = "README.md"
 license = { text = "MIT" }
-authors = [{ name = "David Montero Loaiza", email = "dml.mont@gmail.com" }]
-requires-python = ">=3.9"
+authors = [
+  { name = "David Montero Loaiza", email = "dml.mont@gmail.com" },
+  { name = "Louis Ferdinand Trinkle", email = "louis.trinkle@gmail.com" },
+]
+requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-  "dask>=2023.7.0",
-  "numpy",
-  "pandas>=2.0.3",
+  "dask>=2026.1.1",
+  "numpy>=2.2.6",
+  "pandas>=2.3.3",
   "planetary_computer>=1.0.0",
-  "pystac_client>=0.7.2",
-  "scipy>=1.12.0",
+  "pystac_client>=0.9.0",
+  "scipy>=1.15.3",
   "stackstac>=0.5.1",
-  "xarray>=2023.6.0",
+  "xarray>=2025.6.1",
 ]
 
 [project.optional-dependencies]
-ee = ["xee>=0.0.6"]
+ee = ["xee>=0.0.24"]
 
 [project.urls]
 Homepage = "https://github.com/davemlz/cubo"
