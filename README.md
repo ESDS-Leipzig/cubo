@@ -17,6 +17,9 @@
 <a href='https://arxiv.org/abs/2404.13105'>
     <img src='https://img.shields.io/badge/arXiv-2404.13105-b31b1b.svg' alt='Documentation Status' />
 </a>
+<a href='https://doi.org/10.1109/IGARSS53475.2024.10640742'>
+    <img src='https://img.shields.io/badge/Paper-10.1109/IGARSS53475.2024.10640742-brightgreen.svg' alt='Documentation Status' />
+</a>
 <a href="https://github.com/davemlz/cubo/actions/workflows/tests.yml" target="_blank">
     <img src="https://github.com/davemlz/cubo/actions/workflows/tests.yml/badge.svg" alt="Tests">
 </a>
@@ -55,14 +58,14 @@
 
 **Tutorials**: [https://cubo.readthedocs.io/en/latest/tutorials.html](https://cubo.readthedocs.io/en/latest/tutorials.html)
 
-**Paper**: [https://arxiv.org/abs/2404.13105](https://arxiv.org/abs/2404.13105)
+**Paper**: [https://doi.org/10.1109/IGARSS53475.2024.10640742](https://doi.org/10.1109/IGARSS53475.2024.10640742)
 
 ---
 
 ## News
 
 > [!IMPORTANT]  
-> :star: **Pinned (2024-04-19)**: Our `cubo` paper (preprint) is out in arXiv! Check it here: **[Montero, D., Aybar, C., Ji, C., Kraemer, G., Sochting, M., Teber, K., & Mahecha, M.D. (2024). On-Demand Earth System Data Cubes.](https://arxiv.org/abs/2404.13105)**
+> :star: **Pinned (2026-02-12)**: Our `cubo` paper is out in IEEE! Check it here: **[Montero, D., Aybar, C., Ji, C., Kraemer, G., Sochting, M., Teber, K., & Mahecha, M.D. (2024). On-Demand Earth System Data Cubes.](https://doi.org/10.1109/IGARSS53475.2024.10640742)**
 
 ## Overview
 
@@ -262,15 +265,16 @@ The project is licensed under the MIT license.
 If you use this work, please consider citing the following paper:
 
 ```bibtex
-@article{montero2024cubo,
-  doi = {10.48550/ARXIV.2404.13105},
-  url = {https://arxiv.org/abs/2404.13105},
-  author = {Montero,  David and Aybar,  César and Ji,  Chaonan and Kraemer,  Guido and S\"{o}chting,  Maximilian and Teber,  Khalil and Mahecha,  Miguel D.},
-  keywords = {Databases (cs.DB),  Computer Vision and Pattern Recognition (cs.CV),  Machine Learning (cs.LG),  FOS: Computer and information sciences,  FOS: Computer and information sciences},
+@inproceedings{montero2024cubo,
   title = {On-Demand Earth System Data Cubes},
-  publisher = {arXiv},
+  url = {http://dx.doi.org/10.1109/IGARSS53475.2024.10640742},
+  DOI = {10.1109/igarss53475.2024.10640742},
+  booktitle = {IGARSS 2024 - 2024 IEEE International Geoscience and Remote Sensing Symposium},
+  publisher = {IEEE},
+  author = {Montero,  David and Aybar,  César and Ji,  Chaonan and Kraemer,  Guido and S\"{o}chting,  Maximilian and Teber,  Khalil and Mahecha,  Miguel D.},
   year = {2024},
-  copyright = {Creative Commons Attribution 4.0 International}
+  month = jul,
+  pages = {7529–7532}
 }
 ```
 
