@@ -23,11 +23,11 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "cubo"
-copyright = "2021, David Montero Loaiza"
+copyright = "2026, David Montero Loaiza"
 author = "David Montero Loaiza"
 
 # The full version, including alpha/beta/rc tags
-release = "2024.8.0"
+release = "2026.2.0"
 
 
 # -- General configuration ---------------------------------------------------

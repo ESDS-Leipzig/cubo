@@ -1,10 +1,17 @@
 Changelog
 =========
 
+v2026.2.0
+---------
+
+- Migrated from :code:`setup.py` to :code:`pyproject.toml`.
+- :code:`numpy` was relaxed from :code:`numpy<2.0.0`.
+- Pinned: :code:`stackstac>=0.5.1`.
+
 v2024.8.0
 ---------
 
-- Fix: Avoind Google Earth Engine initialization within :code:`cubo`.
+- Fix: Avoid Google Earth Engine initialization within :code:`cubo`.
 
 v2024.6.0
 ---------
