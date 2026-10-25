@@ -89,7 +89,7 @@ da = cubo.create(
     collection="sentinel-2-l2a", # Name of the STAC collection
     bands=["B02","B03","B04"], # Bands to retrieve
     start_date="2021-06-01", # Start date of the cube
-    end_date="2021-06-10", # End date of the cube
+    end_date="2021-06-10", # End date of the cube (excluded)
     edge_size=64, # Edge size of the cube (px)
     resolution=10, # Pixel size of the cube (m)
 )
@@ -111,7 +111,7 @@ da = cubo.create(
     collection="COPERNICUS/S2_SR_HARMONIZED", # Id of the GEE collection
     bands=["B2","B3","B4"], # Bands to retrieve
     start_date="2016-06-01", # Start date of the cube
-    end_date="2017-07-01", # End date of the cube
+    end_date="2017-07-01", # End date of the cube (excluded)
     edge_size=128, # Edge size of the cube (px)
     resolution=10, # Pixel size of the cube (m)
     gee=True # Use GEE instead of STAC
@@ -120,7 +120,31 @@ da = cubo.create(
 
 This chunk of code is very similar to the STAC-based cubo code. Note that the `collection`
 is now the ID of the GEE collection to use, and note that the `gee` argument must be set to
-`True`.
+`True` (or `stac="ee"`).
+
+And you can even combine multiple collections from STAC and GEE in one cube:
+
+```python
+import cubo
+
+dt = cubo.create(
+    lat=51.3397, # Central latitude of the cube
+    lon=12.3731, # Central longitude of the cube
+    collection=["sentinel-2-l2a", "COPERNICUS/S2_CLOUD_PROBABILITY"], # Collections to use
+    bands={"sentinel-2-l2a": ["B02", "B03", "B04"], "COPERNICUS/S2_CLOUD_PROBABILITY": "probability"}, # Bands of each collection
+    stac={
+        "https://planetarycomputer.microsoft.com/api/stac/v1": "sentinel-2-l2a", # STAC collections
+        "ee": "COPERNICUS/S2_CLOUD_PROBABILITY", # GEE collections
+    },
+    start_date="2022-06-14", # Start date of the cube
+    end_date="2022-06-17", # End date of the cube (excluded)
+    edge_size=128, # Edge size of the cube (px)
+    resolution=10, # Pixel size of the cube (m)
+    datatree=True, # One node per collection
+)
+```
+
+All collections share the same pixel grid, so they are co-registered by design!
 
 ## How does it work?
 
@@ -129,9 +153,9 @@ The thing is super easy and simple.
 1. You have the coordinates of a point of interest. The cube will be created around these coordinates (i.e., these coordinates will be approximately the spatial center of the cube).
 2. Internally, the coordinates are transformed to the projected UTM coordinates [x,y] in meters (i.e., local UTM CRS). They are rounded to the closest pair of coordinates that are divisible by the resolution you requested.
 3. The edge size you provide is used to create a Bounding Box (BBox) for the cube in the local UTM CRS given the exact amount of pixels (Note that the edge size should be a multiple of 2, otherwise it will be rounded, usual edge sizes for ML are 64, 128, 256, 512, etc.).
-4. Additional information is used to retrieve the data from the STAC catalogue or from GEE: starts and end dates, name of the collection, endpoint of the catalogue (ignored for GEE), etc.
-5. Then, by using `stackstac` and `pystac_client` the cube is retrieved as a `xr. DataArray`. In the case of GEE, the cube is retrieved
-via `xee`.
+4. Additional information is used to retrieve the data from the STAC catalogue or from GEE: starts and end dates, name of the collection(s), endpoint of the catalogue(s), etc.
+5. Then, by using `stackstac` and `pystac_client` the cube is retrieved as a `xr.DataArray`. In the case of GEE, the cube is retrieved
+via `xee` using exactly the same pixel grid. When using multiple collections, the cubes are merged, or returned as a `xr.DataTree`.
 6. Success! That's what `cubo` is doing for you, and you just need to provide the coordinates, the edge size, and the additional info to get the cube.
 
 ## Installation
@@ -253,6 +277,68 @@ da = cubo.create(
     edge_size=64,
     resolution=10,
     query={"eo:cloud_cover": {"lt": 10}} # kwarg to pass
+)
+```
+
+### Multiple collections
+
+You can use multiple collections by passing a list to `collection` and a dictionary with the bands of each collection to `bands`. By default, the cubes are merged along the `band` dimension (the `time` dimension is the union of the timestamps of all collections):
+
+```python
+da = cubo.create(
+    lat=51.3397,
+    lon=12.3731,
+    collection=["sentinel-2-l2a", "sentinel-1-rtc"],
+    bands={"sentinel-2-l2a": ["B04", "B08"], "sentinel-1-rtc": ["vv", "vh"]},
+    start_date="2022-06-01",
+    end_date="2022-06-15",
+    edge_size=64,
+    resolution=10,
+)
+```
+
+> [!TIP]
+> If the collections come from different STAC Catalogues (or from GEE), use a dictionary in `stac` with endpoints as keys and the collection(s) of each endpoint as values. Use the `"ee"` key for GEE collections.
+
+### DataTrees and Datasets
+
+Collections rarely share timestamps. Use `datatree=True` to get a `xr.DataTree` with one node per collection (each one with its own time and band dimensions, but sharing the spatial coordinates), and `dataset=True` to get one variable per band:
+
+```python
+dt = cubo.create(
+    lat=51.3397,
+    lon=12.3731,
+    collection=["sentinel-2-l2a", "sentinel-1-rtc"],
+    bands={"sentinel-2-l2a": ["B04", "B08"], "sentinel-1-rtc": ["vv", "vh"]},
+    start_date="2022-06-01",
+    end_date="2022-06-15",
+    edge_size=64,
+    resolution=10,
+    datatree=True,
+    dataset=True,
+)
+
+dt["sentinel-1-rtc"]["vv"]
+```
+
+> [!TIP]
+> Keyword arguments (`stackstac_kw`, `gee_kw`, and search keyword arguments such as `query`) apply to all collections by default. Use collections as keys to set them per collection, e.g., `query={"sentinel-2-l2a": {"eo:cloud_cover": {"lt": 10}}}`.
+
+### Pixel coordinates
+
+By default, the `x` and `y` coordinates are the top-left corners of the pixels (for both STAC and GEE). Use `xy_coords="center"` to get the center of the pixels instead:
+
+```python
+da = cubo.create(
+    lat=4.31,
+    lon=-76.2,
+    collection="sentinel-2-l2a",
+    bands=["B02","B03","B04"],
+    start_date="2021-06-01",
+    end_date="2021-06-10",
+    edge_size=64,
+    resolution=10,
+    xy_coords="center",
 )
 ```
 

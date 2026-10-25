@@ -1,6 +1,7 @@
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from pyproj import CRS, Transformer
 from pyproj.aoi import AreaOfInterest
@@ -117,3 +118,192 @@ def _compute_distance_to_center(da: xr.DataArray) -> np.ndarray:
     distance_to_center = np.linalg.norm((coordinates) - np.array([x, y]), axis=0)
 
     return distance_to_center
+
+
+def _parse_collections(
+    collection: Any,
+    stac: Union[str, dict],
+    bands: Optional[Union[str, List[str], dict]],
+    gee: bool,
+) -> List[dict]:
+    """Harmonizes the collections, STAC endpoints and bands to one request per collection.
+
+    Parameters
+    ----------
+    collection : str | List[str] | ee.ImageCollection
+        Collection(s) to use.
+    stac : str | dict
+        Endpoint of the STAC Catalogue, or a dictionary with endpoints as keys and the
+        collection(s) of each endpoint as values. The 'ee' key is used for Google Earth Engine.
+    bands : str | List[str] | dict
+        Band(s) to use, or a dictionary with collections as keys and the band(s) of each
+        collection as values.
+    gee : bool
+        Whether to use Google Earth Engine for all collections. This ignores the 'stac' argument.
+
+    Returns
+    -------
+    List[dict]
+        Requests with the collection, STAC endpoint and bands of each collection.
+    """
+    # Put the collections into a list if not a list already
+    collections = collection if isinstance(collection, list) else [collection]
+
+    if len(collections) == 0:
+        raise ValueError("At least one collection must be provided.")
+
+    # Collections must be strings to be matched with the 'stac' and 'bands' dictionaries
+    named = all(isinstance(c, str) for c in collections)
+
+    if not named and (
+        len(collections) > 1 or isinstance(stac, dict) or isinstance(bands, dict)
+    ):
+        raise TypeError(
+            "Collections must be strings when requesting multiple collections, or when "
+            "'stac' or 'bands' are dictionaries."
+        )
+
+    if named and len(set(collections)) != len(collections):
+        raise ValueError(f"Duplicated collections are not allowed: {collections}.")
+
+    # Using gee=True is equivalent to stac='ee'
+    if gee:
+        stac = "ee"
+
+    # Get the STAC endpoint of each collection
+    if isinstance(stac, dict):
+        endpoints = dict()
+        for endpoint, values in stac.items():
+            values = values if isinstance(values, list) else [values]
+            for value in values:
+                if value in endpoints:
+                    raise ValueError(
+                        f'Collection "{value}" is assigned to more than one STAC endpoint '
+                        f'("{endpoints[value]}" and "{endpoint}"). Requesting the same '
+                        "collection from different catalogues is not supported yet."
+                    )
+                endpoints[value] = endpoint
+
+        unknown = [c for c in endpoints if c not in collections]
+        missing = [c for c in collections if c not in endpoints]
+
+        if unknown:
+            raise ValueError(
+                f"Collections in 'stac' are not in 'collection': {unknown}."
+            )
+        if missing:
+            raise ValueError(
+                f"Collections in 'collection' have no STAC endpoint in 'stac': {missing}."
+            )
+
+        endpoints = [endpoints[c] for c in collections]
+    else:
+        endpoints = [stac for c in collections]
+
+    # Get the bands of each collection
+    if isinstance(bands, dict):
+        unknown = [c for c in bands if c not in collections]
+        if unknown:
+            raise ValueError(
+                f"Collections in 'bands' are not in 'collection': {unknown}."
+            )
+        bands = [bands.get(c) for c in collections]
+    elif len(collections) > 1 and bands is not None:
+        raise TypeError(
+            "When requesting multiple collections, 'bands' must be a dictionary with "
+            "collections as keys and the band(s) of each collection as values."
+        )
+    else:
+        bands = [bands]
+
+    # Put the bands into list if not a list already
+    bands = [[b] if isinstance(b, str) else b for b in bands]
+
+    return [
+        dict(collection=c, stac=s, bands=b)
+        for c, s, b in zip(collections, endpoints, bands)
+    ]
+
+
+def _split_kw(kw: Optional[dict], collections: List[Any]) -> List[dict]:
+    """Splits global or per-collection keyword arguments into one dictionary per collection.
+
+    The keyword arguments are per collection if all their keys are requested collections.
+
+    Parameters
+    ----------
+    kw : dict
+        Global keyword arguments, or a dictionary with collections as keys and the keyword
+        arguments of each collection as values.
+    collections : List[Any]
+        Requested collections.
+
+    Returns
+    -------
+    List[dict]
+        Keyword arguments of each collection.
+    """
+    kw = kw or dict()
+    names = [c for c in collections if isinstance(c, str)]
+
+    if kw and all(key in names for key in kw):
+        return [dict(kw.get(c) or dict()) for c in collections]
+
+    return [dict(kw) for c in collections]
+
+
+def _split_search_kw(kw: dict, collections: List[Any]) -> List[dict]:
+    """Splits global or per-collection search keyword arguments into one dictionary per collection.
+
+    Each search keyword argument is per collection if its value is a dictionary whose keys
+    are all requested collections.
+
+    Parameters
+    ----------
+    kw : dict
+        Search keyword arguments.
+    collections : List[Any]
+        Requested collections.
+
+    Returns
+    -------
+    List[dict]
+        Search keyword arguments of each collection.
+    """
+    names = [c for c in collections if isinstance(c, str)]
+    split = [dict() for c in collections]
+
+    for key, value in kw.items():
+        per_collection = (
+            isinstance(value, dict) and value and all(k in names for k in value)
+        )
+        for i, c in enumerate(collections):
+            if not per_collection:
+                split[i][key] = value
+            elif c in value:
+                split[i][key] = value[c]
+
+    return split
+
+
+def _exclusive_end_date(end_date: str) -> str:
+    """Converts an end date to the last instant before it as a UTC RFC 3339 string.
+
+    STAC searches include the end date, this makes it exclusive (as in Google Earth Engine).
+
+    Parameters
+    ----------
+    end_date : str
+        End date.
+
+    Returns
+    -------
+    str
+        Last instant before the end date.
+    """
+    end_date = pd.Timestamp(end_date)
+
+    if end_date.tzinfo is None:
+        end_date = end_date.tz_localize("UTC")
+
+    return (end_date - pd.Timedelta(microseconds=1)).isoformat()

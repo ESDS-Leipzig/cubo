@@ -9,6 +9,18 @@ v2026.10.0
 - Synced :code:`requirements.txt` with :code:`pyproject.toml`.
 - Migrated to :code:`xee>=0.1.0` (breaking changes in :code:`xee`): the GEE pixel grid is now defined explicitly and matches the :code:`stackstac` grid.
 - Added the :code:`gee_kw` argument to :code:`cubo.create()`.
+- Added support for multiple collections in :code:`cubo.create()`: :code:`collection` can be a list,
+    :code:`bands` can be a dictionary with the bands of each collection, and :code:`stac` can be a dictionary
+    with the collections of each endpoint (use the :code:`"ee"` key for Google Earth Engine). All collections share the same pixel grid.
+- Added the :code:`datatree` argument to :code:`cubo.create()` to return a :code:`xr.DataTree` with one node per collection.
+- Added the :code:`dataset` argument to :code:`cubo.create()` to return a :code:`xr.Dataset` with one variable per band.
+- Added the :code:`xy_coords` argument to :code:`cubo.create()`: :code:`"topleft"` (default) or :code:`"center"`, for both STAC and Google Earth Engine.
+- :code:`stackstac_kw`, :code:`gee_kw` and the search keyword arguments can be set per collection.
+- Breaking: :code:`end_date` is now excluded for STAC Catalogues too (as in Google Earth Engine).
+- Breaking: :code:`cubo:distance_from_center` is now always computed from the center of the pixels.
+- Breaking: :code:`xy_coords` cannot be passed in :code:`stackstac_kw` anymore, use the :code:`xy_coords` argument instead.
+- Clearer error when no items are found for a STAC collection.
+- Pinned: :code:`xarray>=2024.10.0` (required for :code:`xr.DataTree`).
 - Added support for Python 3.11, 3.12, and 3.13.
 - Dropped support for Python 3.10.
 - Fixed the default value of :code:`gee` in the :code:`cubo.create()` docstring.

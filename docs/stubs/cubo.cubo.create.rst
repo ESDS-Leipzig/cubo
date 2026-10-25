@@ -1,5 +1,5 @@
-cubo.create
-===========
+﻿cubo.cubo.create
+================
 
 .. currentmodule:: cubo.cubo
 
