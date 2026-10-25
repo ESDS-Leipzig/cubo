@@ -25,6 +25,7 @@ def create(
     stac: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
     gee: bool = False,
     stackstac_kw: Optional[dict] = None,
+    gee_kw: Optional[dict] = None,
     **kwargs,
 ) -> xr.DataArray:
     """Creates a data cube from a STAC Catalogue as a :code:`xr.DataArray` object.
@@ -77,6 +78,16 @@ def create(
         Keyword arguments for :code:`stackstac` as a dictionary.
 
         .. versionadded:: 2024.1.0
+
+    gee_kw : dict, default = None
+        Keyword arguments for :code:`xarray.open_dataset()` with the :code:`xee` engine as a dictionary.
+        Only used when :code:`gee=True`.
+
+        .. versionadded:: 2026.10.0
+
+        .. note::
+           The pixel grid (:code:`crs`, :code:`crs_transform`, and :code:`shape_2d`) is defined by
+           :code:`cubo` and cannot be passed here. Pixel coordinates are pixel centers, as given by :code:`xee`.
 
     kwargs :
         Additional keyword arguments passed to :code:`pystac_client.Client.search()`.
@@ -166,22 +177,27 @@ def create(
             collection.filterBounds(BBox).filterDate(start_date, end_date).select(bands)
         )
 
-        # Return the cube via xee
+        # Get BBox values in UTM to define the pixel grid
+        W = bbox_utm["coordinates"][0][0][0]
+        E = bbox_utm["coordinates"][0][2][0]
+        N = bbox_utm["coordinates"][0][2][1]
+        S = bbox_utm["coordinates"][0][0][1]
+
+        # Add xee arguments, chunks can be overridden
+        gee_kw = {"chunks": dict(), **(gee_kw or dict())}
+
+        # Return the cube via xee using the same pixel grid as stackstac
         cube = xr.open_dataset(
             collection,
             engine="ee",
-            geometry=BBox,
-            scale=resolution,
             crs=f"EPSG:{epsg}",
-            chunks=dict(),
+            crs_transform=(resolution, 0, W, 0, -resolution, N),
+            shape_2d=(round((E - W) / resolution), round((N - S) / resolution)),
+            **gee_kw,
         )
 
-        # Rename the coords to match stackstac names, also rearrange
-        cube = (
-            cube.rename(Y="y", X="x")
-            .to_array("band")
-            .transpose("time", "band", "y", "x")
-        )
+        # Rearrange to match stackstac
+        cube = cube.to_array("band").transpose("time", "band", "y", "x")
 
         # Delete all attributes
         cube.attrs = dict()

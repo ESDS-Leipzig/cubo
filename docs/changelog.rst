@@ -7,7 +7,10 @@ v2026.10.0
 - Fix: :code:`cubo:distance_from_center` was transposed, now it matches the :code:`(y, x)` pixel coordinates.
 - Added :code:`pyproj` and :code:`rasterio` as explicit dependencies.
 - Synced :code:`requirements.txt` with :code:`pyproject.toml`.
+- Migrated to :code:`xee>=0.1.0` (breaking changes in :code:`xee`): the GEE pixel grid is now defined explicitly and matches the :code:`stackstac` grid.
+- Added the :code:`gee_kw` argument to :code:`cubo.create()`.
 - Added support for Python 3.11, 3.12, and 3.13.
+- Dropped support for Python 3.10.
 - Fixed the default value of :code:`gee` in the :code:`cubo.create()` docstring.
 - Extended the tests and added offline tests for the utilities.
 
