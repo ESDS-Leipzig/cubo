@@ -252,13 +252,13 @@ By default, `cubo` uses Planetary Computer. But you can use another STAC provide
 da = cubo.create(
     lat=4.31,
     lon=-76.2,
-    collection="sentinel-s2-l2a-cogs",
-    bands=["B05","B06","B07"],
+    collection="sentinel-2-l2a",
+    bands=["rededge1","rededge2","rededge3"],
     start_date="2020-01-01",
     end_date="2020-06-01",
     edge_size=128,
     resolution=20,
-    stac="https://earth-search.aws.element84.com/v0"
+    stac="https://earth-search.aws.element84.com/v1"
 )
 ```
 
@@ -276,7 +276,7 @@ da = cubo.create(
     end_date="2021-06-10",
     edge_size=64,
     resolution=10,
-    query={"eo:cloud_cover": {"lt": 10}} # kwarg to pass
+    query={"eo:cloud_cover": {"lt": 40}} # kwarg to pass
 )
 ```
 
