@@ -9,7 +9,7 @@ from cubo.cubo import _merge
 from cubo.utils import (
     _central_pixel_bbox,
     _compute_distance_to_center,
-    _exclusive_end_date,
+    _gee_end_date,
     _parse_collections,
     _split_kw,
     _split_search_kw,
@@ -135,10 +135,11 @@ class TestUtils(unittest.TestCase):
             [dict(query=query), dict()],
         )
 
-    def test_exclusive_end_date(self):
-        """Test the exclusive end date"""
+    def test_gee_end_date(self):
+        """Test the exclusive end date for Google Earth Engine"""
+        self.assertEqual(_gee_end_date("2021-06-10"), "2021-06-11T00:00:00")
         self.assertEqual(
-            _exclusive_end_date("2021-06-10"), "2021-06-09T23:59:59.999999+00:00"
+            _gee_end_date("2021-06-10T12:00:00"), "2021-06-10T12:00:00.001000"
         )
 
     def test_merge(self):
@@ -240,7 +241,8 @@ class Test(unittest.TestCase):
 
         # Time range
         self.assertTrue((da.time >= pd.Timestamp("2021-06-01")).all())
-        self.assertTrue((da.time < pd.Timestamp("2021-06-10")).all())
+        self.assertTrue((da.time < pd.Timestamp("2021-06-11")).all())
+        self.assertTrue((da.time >= pd.Timestamp("2021-06-10")).any())
 
     def test_xy_coords(self):
         """Test the cubo with the coordinates at the center of the pixels"""

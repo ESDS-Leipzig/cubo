@@ -16,7 +16,7 @@ v2026.10.0
 - Added the :code:`dataset` argument to :code:`cubo.create()` to return a :code:`xr.Dataset` with one variable per band.
 - Added the :code:`xy_coords` argument to :code:`cubo.create()`: :code:`"topleft"` (default) or :code:`"center"`, for both STAC and Google Earth Engine.
 - :code:`stackstac_kw`, :code:`gee_kw` and the search keyword arguments can be set per collection.
-- Breaking: :code:`end_date` is now excluded for STAC Catalogues too (as in Google Earth Engine).
+- Breaking: :code:`end_date` is now included for Google Earth Engine too (as in STAC Catalogues).
 - Breaking: :code:`cubo:distance_from_center` is now always computed from the center of the pixels.
 - Breaking: :code:`xy_coords` cannot be passed in :code:`stackstac_kw` anymore, use the :code:`xy_coords` argument instead.
 - Clearer error when no items are found for a STAC collection.

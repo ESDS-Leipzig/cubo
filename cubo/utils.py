@@ -286,10 +286,12 @@ def _split_search_kw(kw: dict, collections: List[Any]) -> List[dict]:
     return split
 
 
-def _exclusive_end_date(end_date: str) -> str:
-    """Converts an end date to the last instant before it as a UTC RFC 3339 string.
+def _gee_end_date(end_date: str) -> str:
+    """Converts an end date to the exclusive end date of Google Earth Engine.
 
-    STAC searches include the end date, this makes it exclusive (as in Google Earth Engine).
+    STAC searches include the end date, while Google Earth Engine excludes it. This returns the
+    next day for dates (YYYY-MM-DD), or the next millisecond for datetimes, so the end date is
+    included in Google Earth Engine too.
 
     Parameters
     ----------
@@ -299,11 +301,13 @@ def _exclusive_end_date(end_date: str) -> str:
     Returns
     -------
     str
-        Last instant before the end date.
+        Exclusive end date for Google Earth Engine.
     """
-    end_date = pd.Timestamp(end_date)
+    timestamp = pd.Timestamp(end_date)
 
-    if end_date.tzinfo is None:
-        end_date = end_date.tz_localize("UTC")
+    if len(str(end_date)) == 10:
+        timestamp = timestamp + pd.Timedelta(days=1)
+    else:
+        timestamp = timestamp + pd.Timedelta(milliseconds=1)
 
-    return (end_date - pd.Timedelta(microseconds=1)).isoformat()
+    return timestamp.isoformat()

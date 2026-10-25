@@ -89,7 +89,7 @@ da = cubo.create(
     collection="sentinel-2-l2a", # Name of the STAC collection
     bands=["B02","B03","B04"], # Bands to retrieve
     start_date="2021-06-01", # Start date of the cube
-    end_date="2021-06-10", # End date of the cube (excluded)
+    end_date="2021-06-10", # End date of the cube (included)
     edge_size=64, # Edge size of the cube (px)
     resolution=10, # Pixel size of the cube (m)
 )
@@ -111,7 +111,7 @@ da = cubo.create(
     collection="COPERNICUS/S2_SR_HARMONIZED", # Id of the GEE collection
     bands=["B2","B3","B4"], # Bands to retrieve
     start_date="2016-06-01", # Start date of the cube
-    end_date="2017-07-01", # End date of the cube (excluded)
+    end_date="2017-07-01", # End date of the cube (included)
     edge_size=128, # Edge size of the cube (px)
     resolution=10, # Pixel size of the cube (m)
     gee=True # Use GEE instead of STAC
@@ -137,7 +137,7 @@ dt = cubo.create(
         "ee": "COPERNICUS/S2_CLOUD_PROBABILITY", # GEE collections
     },
     start_date="2022-06-14", # Start date of the cube
-    end_date="2022-06-17", # End date of the cube (excluded)
+    end_date="2022-06-17", # End date of the cube (included)
     edge_size=128, # Edge size of the cube (px)
     resolution=10, # Pixel size of the cube (m)
     datatree=True, # One node per collection

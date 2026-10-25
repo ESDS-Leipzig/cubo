@@ -12,7 +12,7 @@ from scipy import constants
 from .utils import (
     _central_pixel_bbox,
     _compute_distance_to_center,
-    _exclusive_end_date,
+    _gee_end_date,
     _parse_collections,
     _split_kw,
     _split_search_kw,
@@ -59,10 +59,10 @@ def create(
     start_date : str
         Start date of the data cube in YYYY-MM-DD format (included).
     end_date : str
-        End date of the data cube in YYYY-MM-DD format (excluded).
+        End date of the data cube in YYYY-MM-DD format (included).
 
         .. versionchanged:: 2026.10.0
-           The end date is excluded for both STAC Catalogues and Google Earth Engine.
+           The end date is included for both STAC Catalogues and Google Earth Engine.
 
     bands : str | List[str] | dict, default = None
         Name of the band(s) to use. If None, all bands are used. When requesting multiple collections,
@@ -173,7 +173,7 @@ def create(
     ...     edge_size=32,
     ...     resolution=10,
     ... )
-    <xarray.DataArray (time: 2, band: 3, y: 32, x: 32)>
+    <xarray.DataArray (time: 3, band: 3, y: 32, x: 32)>
 
     Create a Sentinel-2 L2A data cube with an edge size of 128 px from Google Earth Engine:
 
@@ -355,10 +355,10 @@ def _stac_cube(
     # Open the Catalogue
     CATALOG = pystac_client.Client.open(stac)
 
-    # Do a search, the end date is excluded
+    # Do a search
     SEARCH = CATALOG.search(
         intersects=bbox_latlon,
-        datetime=f"{start_date}/{_exclusive_end_date(end_date)}",
+        datetime=f"{start_date}/{end_date}",
         collections=[collection],
         **search_kw,
     )
@@ -440,8 +440,10 @@ def _gee_cube(
     else:
         name = collection.get("system:id").getInfo()
 
-    # Do the filtering: Bounds, time, and bands
-    collection = collection.filterBounds(BBox).filterDate(start_date, end_date)
+    # Do the filtering: Bounds, time, and bands (the end date is included as in STAC)
+    collection = collection.filterBounds(BBox).filterDate(
+        start_date, _gee_end_date(end_date)
+    )
 
     if bands is not None:
         collection = collection.select(bands)
