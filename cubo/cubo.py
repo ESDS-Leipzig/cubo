@@ -68,7 +68,7 @@ def create(
         Pixel size in meters.
     stac : str, default = 'https://planetarycomputer.microsoft.com/api/stac/v1'
         Endpoint of the STAC Catalogue to use.
-    gee : bool, default = True
+    gee : bool, default = False
         Whether to use Google Earth Engine. This ignores the 'stac' argument.
 
         .. versionadded:: 2024.1.0

@@ -113,7 +113,7 @@ def _compute_distance_to_center(da: xr.DataArray) -> np.ndarray:
     x = (coordinates[0] ** 0) * da.attrs["central_x"]
     y = (coordinates[1] ** 0) * da.attrs["central_y"]
 
-    # Compute the distance, transposed, so y is first
-    distance_to_center = np.linalg.norm((coordinates) - np.array([x, y]), axis=0).T
+    # Compute the distance, the meshgrid is already (y, x)
+    distance_to_center = np.linalg.norm((coordinates) - np.array([x, y]), axis=0)
 
     return distance_to_center

@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v2026.10.0
+----------
+
+- Fix: :code:`cubo:distance_from_center` was transposed, now it matches the :code:`(y, x)` pixel coordinates.
+- Added :code:`pyproj` and :code:`rasterio` as explicit dependencies.
+- Synced :code:`requirements.txt` with :code:`pyproject.toml`.
+- Added support for Python 3.11, 3.12, and 3.13.
+- Fixed the default value of :code:`gee` in the :code:`cubo.create()` docstring.
+- Extended the tests and added offline tests for the utilities.
+
 v2026.2.0
 ---------
 
