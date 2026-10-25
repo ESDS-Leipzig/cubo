@@ -1,6 +1,6 @@
 """cubo - On-Demand Earth System Data Cubes in Python"""
 
-__version__ = "2026.10.0"
+__version__ = "2026.10.1"
 __author__ = "David Montero Loaiza <dml.mont@gmail.com>"
 __all__ = []
 

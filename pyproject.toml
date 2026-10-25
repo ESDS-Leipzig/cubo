@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cubo"
-version = "2026.10.0"
+version = "2026.10.1"
 description = "On-Demand Earth System Data Cubes in Python"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { text = "MIT" }
@@ -50,7 +50,7 @@ Homepage = "https://github.com/ESDS-Leipzig/cubo"
 profile = "black"
 
 [tool.setuptools.packages.find]
-exclude = ["tests"]
+include = ["cubo*"]
 
 [tool.setuptools.package-data]
 "cubo.data" = ["*.json"]

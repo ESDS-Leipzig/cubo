@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v2026.10.1
+----------
+
+- Fix: The :code:`docs` folder was installed as a top-level package in :code:`site-packages`. Only :code:`cubo` is installed now.
+
 v2026.10.0
 ----------
 
