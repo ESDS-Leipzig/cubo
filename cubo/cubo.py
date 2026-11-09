@@ -6,6 +6,7 @@ import planetary_computer as pc
 import pystac_client
 import rasterio.features
 import stackstac
+import sys
 import xarray as xr
 from scipy import constants
 
@@ -440,10 +441,33 @@ def _gee_cube(
     else:
         name = collection.get("system:id").getInfo()
 
-    # Do the filtering: Bounds, time, and bands (the end date is included as in STAC)
-    collection = collection.filterBounds(BBox).filterDate(
-        start_date, _gee_end_date(end_date)
-    )
+    # set default as a collection
+    ctype = True
+
+    # try to get collection info
+    # this will fail if an Image is called as an ImageCollection
+    # and will set a ctype flag which will determine if the
+    # "collection" is (re)loaded as an ee.Image
+    try:
+        collection.getInfo()
+    except:
+        # search the except statement for "found 'Image'"
+        # anything which isn't -1 is valid
+        if sys.exc_info()[1].args[0].find("found 'Image'") != -1:
+            ctype = False
+    
+    if ctype:
+        # If the collection is a true collection
+        # Do the filtering: Bounds, time, and bands (the end date is included as in STAC)
+        collection = collection.filterBounds(BBox).filterDate(
+            start_date, _gee_end_date(end_date)
+        )
+    else:
+        # the collectionis a single multi-band image
+        # specify it as such and clip to filter bounds
+        # use the name variable to avoid recursive use
+        # of variables (not ideal should be changed in this workflow)
+        collection = ee.Image(name).clip(BBox)
 
     if bands is not None:
         collection = collection.select(bands)
